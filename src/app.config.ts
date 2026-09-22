@@ -1,0 +1,43 @@
+export default defineAppConfig({
+  pages: [
+    'pages/home/index',
+    'pages/levels/index',
+    'pages/mine/index',
+    'pages/game/index',
+    'pages/result/index',
+    'pages/rank/index'
+  ],
+  tabBar: {
+    color: '#9aa1ad',
+    selectedColor: '#FF6B35',
+    backgroundColor: '#ffffff',
+    borderStyle: 'white',
+    list: [
+      {
+        pagePath: 'pages/home/index',
+        text: '首页',
+        iconPath: 'assets/tabbar/home.svg',
+        selectedIconPath: 'assets/tabbar/home-selected.svg'
+      },
+      {
+        pagePath: 'pages/levels/index',
+        text: '关卡',
+        iconPath: 'assets/tabbar/levels.svg',
+        selectedIconPath: 'assets/tabbar/levels-selected.svg'
+      },
+      {
+        pagePath: 'pages/mine/index',
+        text: '我的',
+        iconPath: 'assets/tabbar/mine.svg',
+        selectedIconPath: 'assets/tabbar/mine-selected.svg'
+      }
+    ]
+  },
+  window: {
+    backgroundTextStyle: 'light',
+    navigationBarBackgroundColor: '#ffffff',
+    navigationBarTitleText: '眼力大作战',
+    navigationBarTextStyle: 'black',
+    backgroundColor: '#f4f6f8'
+  }
+})

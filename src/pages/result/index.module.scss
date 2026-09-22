@@ -1,0 +1,184 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding $spacing-xl;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(180deg, $color-primary-soft 0%, $color-bg-page 420rpx);
+}
+
+.card {
+  width: 686rpx;
+  padding: $spacing-xl $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: $color-bg-card;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-card;
+}
+
+.chapter {
+  font-size: $font-size-xs;
+  color: $color-primary-dark;
+  background-color: $color-primary-soft;
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-round;
+}
+
+.title {
+  margin-top: $spacing-sm;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.starRow {
+  margin-top: $spacing-lg;
+}
+
+.recordTag {
+  margin-top: $spacing-md;
+  padding: 6rpx $spacing-md;
+  background-color: $color-record-bg;
+  border-radius: $radius-round;
+}
+
+.recordTagText {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $color-record-text;
+  white-space: nowrap;
+}
+
+// 失败态：不用星级，用一个明确的失败标记
+.failBlock {
+  margin-top: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.failTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-error;
+}
+
+.failDesc {
+  margin-top: $spacing-xs;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  text-align: center;
+}
+
+.metrics {
+  width: 100%;
+  margin-top: $spacing-xl;
+  display: flex;
+  align-items: stretch;
+}
+
+.metric {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.metricLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.metricValue {
+  margin-top: $spacing-xs;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  margin-top: $spacing-lg;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  text-align: center;
+}
+
+.actions {
+  width: 686rpx;
+  margin-top: $spacing-xl;
+}
+
+.primaryBtn {
+  width: 100%;
+  height: $button-height-lg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-button;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.primaryBtnText {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-medium;
+  color: $color-text-white;
+  white-space: nowrap;
+}
+
+.ghostBtn {
+  width: 100%;
+  height: $button-height-md;
+  margin-top: $spacing-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $color-bg-card;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-button;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.ghostBtnText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  white-space: nowrap;
+}
+
+.emptyPage {
+  min-height: 100vh;
+  padding: 0 $page-padding;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.emptyDesc {
+  margin-top: $spacing-sm;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.emptyPage .primaryBtn {
+  margin-top: $spacing-xl;
+}

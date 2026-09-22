@@ -1,0 +1,28 @@
+# 依赖
+node_modules
+
+# 构建产物
+dist
+output
+
+# 预览服务
+.pai
+
+# SWC 缓存
+.swc
+
+# 环境变量（含 API Key）
+.env
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode
+.idea
+
+# 日志
+*.log
+npm-debug.log*

@@ -1,0 +1,157 @@
+@use '@/styles/variables.scss' as *;
+
+// ============ 卡片基础 ============
+// 卡片基准字号：格内字号用 em 相对它，造型可用面积不同就调基准字号
+.card {
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+  background-color: $color-bg-card;
+  border: 2rpx solid $color-border;
+  box-shadow: $shadow-card;
+  font-size: 40rpx;
+}
+
+// 方形卡：常规圆角面板
+.cardSquare {
+  width: 686rpx;
+  padding: 12rpx;
+  border-radius: $radius-xl;
+}
+
+// ============ 圆形卡：整块圆盘，格子沿圆周分区 ============
+.cardCircle {
+  width: 686rpx;
+  height: 686rpx;
+  padding: 0;
+  border-radius: $radius-round;
+  background-color: $color-circle-bg;
+  border-color: $color-circle-border;
+  font-size: 30rpx;
+}
+
+// 分区区域向内缩一圈，让最外圈格子不贴到圆边上
+.circleArea {
+  position: absolute;
+  top: 5%;
+  left: 5%;
+  right: 5%;
+  bottom: 5%;
+}
+
+// 圆形卡字号：格子沿半径方向的厚度有限，字号要跟着圈数收敛
+.circle3 {
+  font-size: 44rpx;
+}
+
+.circle4 {
+  font-size: 38rpx;
+}
+
+.circle5 {
+  font-size: 33rpx;
+}
+
+.circle6 {
+  font-size: 29rpx;
+}
+
+.circle7 {
+  font-size: 25rpx;
+}
+
+.circle8 {
+  font-size: 22rpx;
+}
+
+// ============ 生肖卡：整张卡裁成生肖轮廓，格子划分在轮廓内部 ============
+.cardSilhouette {
+  width: 686rpx;
+  height: 686rpx;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  // 无底色：格子紧贴铺满轮廓，轮廓由 clip-path 定义
+  background-color: transparent;
+  // 兜底字号，实际由 silhouette3~silhouette8 覆盖
+  font-size: 40rpx;
+}
+
+// 生肖卡字号：格子是轮廓内划分出的多边形小格，比同尺寸的规整网格小，字号相应收敛
+// （按最紧的形状定的：8×8 时最小格约 19rpx）
+.silhouette3 {
+  font-size: 44rpx;
+}
+
+.silhouette4 {
+  font-size: 38rpx;
+}
+
+.silhouette5 {
+  font-size: 34rpx;
+}
+
+.silhouette6 {
+  font-size: 28rpx;
+}
+
+.silhouette7 {
+  font-size: 24rpx;
+}
+
+.silhouette8 {
+  font-size: 20rpx;
+}
+
+// ============ 网格（方形卡使用） ============
+.grid {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.cellWrap {
+  position: relative;
+  height: 0; // 高度由 paddingBottom 撑出的正方形决定
+}
+
+.cellInner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.14em; // 格间距随字号同步缩放
+}
+
+// 小格字号（相对卡片基准字号）
+.size3 {
+  font-size: 1.6em;
+}
+
+.size4 {
+  font-size: 1.3em;
+}
+
+.size5 {
+  font-size: 1.1em;
+}
+
+.size6 {
+  font-size: 0.95em;
+}
+
+.size7 {
+  font-size: 0.8em;
+}
+
+.size8 {
+  font-size: 0.7em;
+}
+
+.frozen {
+  pointer-events: none;
+}

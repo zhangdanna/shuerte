@@ -1,0 +1,126 @@
+@use '@/styles/variables.scss' as *;
+
+$tone-count: 6;
+$tints: $cell-tint-1, $cell-tint-2, $cell-tint-3, $cell-tint-4, $cell-tint-5, $cell-tint-6;
+$digits: $cell-digit-1, $cell-digit-2, $cell-digit-3, $cell-digit-4, $cell-digit-5, $cell-digit-6;
+
+.cell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2rpx solid $color-cell-border;
+  border-radius: $radius-md;
+  transition: transform $transition-fast;
+
+  &:active {
+    transform: scale(0.94);
+  }
+}
+
+// 数字与底色成对配色：按数字对 6 取模循环，同一个色号永远是「同色底 + 同色字」
+@for $i from 1 through $tone-count {
+  .tone#{$i} {
+    background-color: nth($tints, $i);
+
+    .value {
+      color: nth($digits, $i);
+    }
+  }
+}
+
+// 分区格子：形状由 clip-path 决定，所以不要边框和圆角（会被裁出残缺边框）
+.clipped {
+  border: none;
+  border-radius: 0;
+}
+
+// 铺满整张卡片的格子（圆形卡）：几何坐标相对整张卡片计算
+.absolute {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  &:active {
+    transform: none;
+  }
+}
+
+.value {
+  font-size: inherit;
+  font-weight: $font-weight-semibold;
+  line-height: 1;
+}
+
+.floatingValue {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+// 点对：只播一次点击动效，底色保持原样（不做「已点击」变色）
+.cell.done {
+  animation: cellTap 0.3s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+// 分区格子不能缩放（会和剪裁形状错位），改成一次淡闪
+.cell.clipped.done {
+  animation: clippedTap 0.32s ease;
+}
+
+// 点错：红底 + 抖动，状态色用双类名提高优先级，稳定覆盖上面的配色
+.cell.error {
+  background-color: $color-cell-error-bg;
+  animation: cellShake 0.3s ease;
+}
+
+.cell.error .value {
+  color: $color-cell-error-text;
+}
+
+@keyframes cellTap {
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(0.86);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes clippedTap {
+  0% {
+    opacity: 1;
+  }
+
+  40% {
+    opacity: 0.45;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes cellShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5rpx);
+  }
+
+  75% {
+    transform: translateX(5rpx);
+  }
+}

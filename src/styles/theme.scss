@@ -1,0 +1,98 @@
+// ============================================
+// 主题配色变量 —— 眼力大作战（专注力训练）
+// ============================================
+
+// 品牌主题色：日落橙，代表活力与快乐
+$color-primary: #FF6B35;
+$color-primary-light: #FF8C5A;
+$color-primary-dark: #E55A2B;
+$color-primary-soft: #FFF0EB;
+
+// 辅助色：珊瑚粉（进度、星星、强调）
+$color-accent: #FF4D8D;
+$color-accent-soft: #FFE8F0;
+
+// 功能色
+$color-success: #FF6B35;
+$color-warning: #FF8C5A;
+$color-error: #f5483b;
+$color-info: #2f6bff;
+
+// 背景色
+$color-bg-page: #FFF8F0;
+$color-bg-card: #ffffff;
+$color-bg-hover: #FFF0EB;
+
+// 文本色
+$color-text-primary: #1a1d26;
+$color-text-secondary: #5a6270;
+$color-text-tertiary: #9aa1ad;
+$color-text-disabled: #c9cdd4;
+$color-text-white: #ffffff;
+
+// 边框色
+$color-border: #f0e8e4;
+$color-divider: #f5ede8;
+
+// ============================================
+// 业务变量：方格 / 星级 / 遮罩
+// ============================================
+
+// 方格（未点击 / 已完成 / 错误）
+$color-cell-bg: #ffffff;
+$color-cell-border: #f0e8e4;
+$color-cell-text: #1a1d26;
+$color-cell-done-bg: #FF6B35;
+$color-cell-done-text: #ffffff;
+$color-cell-error-bg: #fff0ee;
+$color-cell-error-border: #f5483b;
+$color-cell-error-text: #d92d20;
+
+// 星级
+$color-star: #ffb020;
+$color-star-empty: #f0e8e4;
+$color-star-soft: #fff7e6;
+
+// 遮罩与浮层
+$color-overlay: rgba(26, 29, 38, 0.72);
+$color-overlay-light: rgba(255, 255, 255, 0.92);
+
+// 记录标签
+$color-record-bg: #FFE8F0;
+$color-record-text: #b45309;
+
+// ============================================
+// 页面柔光背景（暖色调，活泼快乐）
+// ============================================
+$color-bg-top: #FFF8F0;
+$color-bg-bottom: #FFF0F5;
+
+// ============================================
+// 方格配色：底色与数字成对出现（红字配红底、蓝字配蓝底…），按数字 1..6 循环
+// 底色一律压到极浅，保证数字对比度足够；数字统一用中等深度的色相，避免荧光感
+// 注意：tone 数量必须与 GridCell/index.module.scss 的 $tone-count 一致
+// ============================================
+$cell-tint-1: #fff0ef; // 红粉
+$cell-tint-2: #fff6ea; // 橙杏
+$cell-tint-3: #f4f9e9; // 黄绿
+$cell-tint-4: #eaf7f1; // 青绿
+$cell-tint-5: #edf4fe; // 天蓝
+$cell-tint-6: #f5f1fd; // 薰衣草
+
+$cell-digit-1: #d64b4b;
+$cell-digit-2: #c0761a;
+$cell-digit-3: #6b9a21;
+$cell-digit-4: #148f66;
+$cell-digit-5: #2f6fd0;
+$cell-digit-6: #7355c9;
+
+// ============================================
+// 圆形卡配色（暖灰系）
+// ============================================
+$color-circle-bg: #FFF5F0;
+$color-circle-border: #E5A080;
+
+// ============================================
+// 生肖卡配色（线稿风：整张卡裁成生肖轮廓，墨色作轮廓线，格子是轮廓内划分出的浅色小格）
+// ============================================
+$color-zodiac-ink: #2f2f33;

@@ -1,0 +1,179 @@
+@use '@/styles/variables.scss' as *;
+
+.mine {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FFF5F0 0%, #FFFFFF 40%);
+  padding: $page-padding;
+  padding-bottom: 120rpx;
+}
+
+/* 统计卡片 */
+.statsCard {
+  margin-top: 40rpx;
+  background: #ffffff;
+  border-radius: $radius-lg;
+  padding: 40rpx 32rpx;
+  box-shadow: $shadow-card;
+}
+
+.statsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.statValue {
+  font-size: 48rpx;
+  font-weight: $font-weight-bold;
+  color: #FF6B35;
+  margin-bottom: 8rpx;
+}
+
+.statLabel {
+  font-size: $font-size-sm;
+  color: #8B7355;
+}
+
+.statDivider {
+  width: 2rpx;
+  height: 60rpx;
+  background: #F0E8E4;
+}
+
+.streakRow {
+  margin-top: 32rpx;
+  padding-top: 32rpx;
+  border-top: 2rpx solid #F0E8E4;
+  text-align: center;
+}
+
+.streakText {
+  font-size: $font-size-md;
+  color: #FF6B35;
+  font-weight: $font-weight-medium;
+}
+
+/* 区块 */
+.section {
+  margin-top: 40rpx;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: #333333;
+  margin-bottom: 24rpx;
+  padding-left: 8rpx;
+}
+
+/* 成绩列表 */
+.resultList {
+  background: #ffffff;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-card;
+}
+
+.resultItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  border-bottom: 2rpx solid #F5EDE8;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.resultInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.resultLevel {
+  font-size: $font-size-md;
+  color: #333333;
+  margin-bottom: 8rpx;
+}
+
+.resultTime {
+  font-size: $font-size-xs;
+  color: #999999;
+}
+
+.resultStats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.resultDuration {
+  font-size: $font-size-md;
+  color: #FF6B35;
+  font-weight: $font-weight-medium;
+  margin-bottom: 8rpx;
+}
+
+.resultStars {
+  font-size: $font-size-sm;
+}
+
+/* 设置项 */
+.settingItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 24rpx 32rpx;
+  border-radius: $radius-lg;
+  margin-bottom: 16rpx;
+  box-shadow: $shadow-card;
+}
+
+.settingLabel {
+  font-size: $font-size-md;
+  color: #333333;
+}
+
+/* 关于 */
+.aboutItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 24rpx 32rpx;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.aboutLabel {
+  font-size: $font-size-md;
+  color: #FF6B35;
+}
+
+.aboutArrow {
+  font-size: $font-size-xl;
+  color: #CCCCCC;
+}
+
+/* 版本信息 */
+.version {
+  display: block;
+  text-align: center;
+  margin-top: 60rpx;
+  font-size: $font-size-xs;
+  color: #CCCCCC;
+}
