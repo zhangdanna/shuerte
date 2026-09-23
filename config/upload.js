@@ -4,7 +4,7 @@ const path = require('path');
 
 (async () => {
   const project = new ci.Project({
-    appid: 'wx7562b854d2851024',
+    appid: 'wx25bf5262c669e9a9',
     type: 'miniProgram',
     projectPath: path.resolve(__dirname, '..', 'dist', 'weapp'),  // 指向 Taro 编译的微信小程序产物目录
     privateKeyPath: path.resolve(__dirname, '../private.wx.key'),  // 密钥文件路径

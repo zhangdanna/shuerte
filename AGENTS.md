@@ -302,6 +302,7 @@ totalGames  streakDays  lastPlayedDate  recent[≤10]  settings{ sound, haptics 
 | 2026-09-21 | 分类收敛为初级/高级/困难三档（卡片造型不再作为分类展示，改为档位皮肤）；圆形卡从内接正方形网格改为整块圆盘分区（半径分圈 2k-1 格 × 角度分格，格子是扇环，沿圆边排一圈）；生肖卡改为生肖轮廓铺满整张卡片、数字格切不规则四边形；新增纯几何模块 `utils/cardLayout.ts`；修复上一版 `cardLayout.ts` 遗留未定义导出导致对局页编译失败 | 浏览器端到端 7/7 通过（9/36 格圆形分区半径分组正确、生肖 9 格 clip-path 互不相同、点击命中正常、无编译错误） |
 | 2026-09-21 | **临时**：按用户要求关闭关卡禁用（`utils/progress.ts` 的 `UNLOCK_ALL_LEVELS = true`），测试期任意关卡可直接进入 | 待用户测试完成后改回 `false` |
 | 2026-09-21 | 生肖卡重构（按 `docs/refs/3.png` 参考图的线稿风）：① 修掉轮廓生成的真 bug —— 追踪出的边界点被**排序**后才做平滑，边界顺序被打乱，导致 clip-path 一直是乱的（这是历史上「生肖形状怎么改都不对」的根因）；② 12 生肖全部重画为「侧身朝右、突出角/耳/尾/腿」的椭圆并集，单连通、面积 22%~45%；③ 分格从「格心 + 固定小方块」改为**多源 BFS 生长的 Voronoi 划分**，格子紧贴拼合、铺满整条轮廓，每格是不规则多边形；④ 视觉改墨色线稿风：卡片底色 = 墨色，格子向形心收缩留缝，缝隙露出墨色即轮廓勾边 + 格线；⑤ 删掉 `utils/cardLayout.ts`（拆成 `circleLayout.ts` + `silhouette.ts`）；⑥ 重写 `scripts/preview-shapes.js`，新增连通性 / 面积 / 各尺寸分格可行性 / Voronoi ASCII 预览四项自检 | 自检脚本 12 形状 × 6 尺寸 72 组合全通过；浏览器实测 3×3=9 格、8×8=64 格、点击推进、圆形卡无回归；qianwen-vision 读 12 张截图核验，11 个「清晰可辨」，虎为「猫科动物」 |
+| 2026-09-23 | 打通 miniprogram-ci 上传链路：① 修掉上传阻塞 bug —— tabBar 图标由 `.svg` 改为 `.png`（微信小程序 tabBar 只支持 PNG/JPG，`.svg` 会被 `miniprogram-ci` 以 `Wrong file format` 拒绝），新增一次性脚本 `scripts/convert-svg-to-png.js` 转换 6 个图标并同步 `src/app.config.ts`；② `README.md` 的「编译为微信小程序」改为 miniprogram-ci 发布步骤（上传密钥 `private.wx.key`、IP 白名单、`npm run upload`、开发版本→体验版→发布、常见报错） | `npm run build:weapp` 编译通过；`npm run upload` 成功（`上传成功: { subPackageInfo: [{ name: '__FULL__', size: 668842 }] }`，版本 test1.0.0） |
 
 ---
 

@@ -16,20 +16,20 @@ export default defineAppConfig({
       {
         pagePath: 'pages/home/index',
         text: '首页',
-        iconPath: 'assets/tabbar/home.svg',
-        selectedIconPath: 'assets/tabbar/home-selected.svg'
+        iconPath: 'assets/tabbar/home.png',
+        selectedIconPath: 'assets/tabbar/home-selected.png'
       },
       {
         pagePath: 'pages/levels/index',
         text: '关卡',
-        iconPath: 'assets/tabbar/levels.svg',
-        selectedIconPath: 'assets/tabbar/levels-selected.svg'
+        iconPath: 'assets/tabbar/levels.png',
+        selectedIconPath: 'assets/tabbar/levels-selected.png'
       },
       {
         pagePath: 'pages/mine/index',
         text: '我的',
-        iconPath: 'assets/tabbar/mine.svg',
-        selectedIconPath: 'assets/tabbar/mine-selected.svg'
+        iconPath: 'assets/tabbar/mine.png',
+        selectedIconPath: 'assets/tabbar/mine-selected.png'
       }
     ]
   },

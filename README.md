@@ -145,19 +145,6 @@ yarn build:h5
 
 编译产物在 `dist/h5` 目录，可直接部署到静态服务器。
 
-### 编译为微信小程序
-
-```bash
-# 编译小程序版本
-npm run build:weapp
-# 或
-yarn build:weapp
-```
-
-编译产物在 `dist/weapp/` 目录，使用微信开发者工具打开该目录即可预览和上传。
-
----
-
 ## 部署
 
 ### 方式一：Vercel 部署（H5 版本，推荐快速分享）
@@ -201,29 +188,38 @@ vercel --prod dist --yes
 
 ### 方式二：微信小程序发布
 
-**1. 编译小程序**
+### 编译并上传微信小程序（miniprogram-ci）
+
+小程序代码上传走 **`miniprogram-ci`** 命令行方式，脚本已就绪：`config/upload.js`。
+
+**前置准备（一次性）**
+
+1. 在[微信公众平台](https://mp.weixin.qq.com) →「开发」→「开发管理」→「开发设置」→「小程序代码上传」中生成并下载**代码上传密钥**，保存为项目根目录的 `private.wx.key`（已被 `.gitignore` 的 `*.key` 规则忽略，不会提交到仓库）
+2. 同一位置配置 **IP 白名单**：把执行上传的机器公网 IP 加入白名单；若 IP 不固定（家庭/公司宽带），建议直接关闭白名单校验
+3. 确认 `config/upload.js` 中的 `appid` 与目标小程序一致，并按需修改 `version` / `desc`
+
+**编译 + 上传**
 
 ```bash
+# 1. 编译小程序版本（产物在 dist/weapp/）
 npm run build:weapp
+
+# 2. 打包并上传到微信公众平台（生成一个「开发版本」）
+npm run upload
 ```
 
-**2. 使用微信开发者工具**
+`npm run upload` 等价于 `node config/upload.js`：它会读取 `dist/weapp/`、用 `private.wx.key` 签名后上传，日志出现 `上传成功: {...}` 即完成。
 
-- 打开[微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)
-- 导入项目，选择 `dist/weapp/` 目录
-- 填写 AppID（在[微信公众平台](https://mp.weixin.qq.com/)注册小程序后获取）
+**上传之后**
 
-**3. 上传与发布**
+代码此时只进入微信公众平台的「**开发版本**」，普通用户还搜不到，按需继续：
 
-- 点击「上传」填写版本号和备注
-- 登录[微信公众平台](https://mp.weixin.qq.com/) → 版本管理 → 提交审核
-- 审核通过后点击「发布」
+1. 「管理」→「版本管理」→ 开发版本 → 扫码真机预览，或点「选为体验版」后把体验版二维码发给体验成员
+2. 需要全员可见：「提交审核」→ 审核通过后点「发布」
 
-**注意事项**
-
-- 小程序需要注册 AppID，无 AppID 只能预览不能发布
-- 音效在小程序端会自动落地临时文件播放（`InnerAudioContext` 不支持 data URI）
-- 发布前建议在真机上验证手感、震动、音效效果
+> **常见报错**
+> - `errCode: -10008, errMsg: invalid ip: x.x.x.x` —— 该 IP 不在白名单，回「前置准备」第 2 步处理
+> - `Wrong file format, only .png、.jpg、.jpeg format is supported` —— tabBar 图标只支持 PNG/JPG，不支持 SVG
 
 ---
 
