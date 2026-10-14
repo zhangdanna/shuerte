@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, View } from '@tarojs/components';
 import classnames from 'classnames';
 import { LevelConfig } from '@/types/game';
+import { MODE_LABELS } from '@/data/levels';
 import { formatSeconds } from '@/utils/format';
 import StarRating from '@/components/StarRating';
 import styles from './index.module.scss';
@@ -31,13 +32,15 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, stars, bestTime, locked, c
       <Text className={styles.index}>第 {level.globalIndex} 关</Text>
       <Text className={styles.size}>
         {level.size}×{level.size}
+        {/* 变体玩法的关卡带玩法标签，避免看起来和第一轮的正序关一样 */}
+        {level.mode === 'forward' ? '' : ` · ${MODE_LABELS[level.mode]}`}
       </Text>
     </View>
     {locked ? (
       <Text className={styles.lockHint}>未解锁</Text>
     ) : (
       <View className={styles.body}>
-        <StarRating stars={stars} size="sm" />
+        <StarRating stars={stars} max={level.maxStars} size="sm" />
         <Text className={styles.time}>{bestTime === null ? '未通关' : formatSeconds(bestTime, 1)}</Text>
       </View>
     )}

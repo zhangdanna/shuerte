@@ -89,7 +89,7 @@ const ResultPage: React.FC = () => {
         ) : (
           <>
             <View className={styles.starRow}>
-              <StarRating stars={stars} size="lg" animated />
+              <StarRating stars={stars} max={level.maxStars} size="lg" animated />
             </View>
             {isBest && (
               <View className={styles.recordTag}>
@@ -127,12 +127,12 @@ const ResultPage: React.FC = () => {
           </View>
         </View>
 
-        <Text className={styles.hint}>
-          {failed
-            ? `失误 ${errors} 次累计罚时 ${formatSeconds(errors * ERROR_PENALTY, 1)}，重打本关才能继续推进`
-            : `三星目标 ${formatSeconds(level.thresholds.gold, 1)} · 限时 ${formatSeconds(level.timeLimit, 0)}
-              {errors === 0 ? ' · 零失误已额外加星' : ' · 零失误可额外加星'}`}
-        </Text>
+        {/* 星级评定规则不向玩家展示，只在失败时说明「为什么没过」 */}
+        {failed && (
+          <Text className={styles.hint}>
+            失误 {errors} 次累计罚时 {formatSeconds(errors * ERROR_PENALTY, 2)}，重打本关才能继续推进
+          </Text>
+        )}
       </View>
 
       <View className={styles.actions}>

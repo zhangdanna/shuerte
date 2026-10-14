@@ -17,7 +17,7 @@
 
 | 目的 | 命令 |
 | --- | --- |
-| 启动 / 刷新预览 | `node "c:\Users\danna.zhang\.trae-cn\builtin_skills\TRAE-generate-mini-app\scripts\preview-server.js" d:\working\play\shuerte` |
+| 启动 / 刷新预览 | `node "c:\Users\danna.zhang\.trae-cn\builtin_skills\TRAE-generate-mini-app\scripts\preview-server.js" d:\working\play\yanlidazuozhan\shuerte` |
 | 重新生成音效 | `node scripts/gen-sounds.js` |
 | 获取技能资产目录 | `node "c:\Users\danna.zhang\.trae-cn\builtin_skills\TRAE-generate-mini-app\scripts\get-skill-assets-dir.js"` |
 | 校验生肖轮廓与分格 | `node scripts/preview-shapes.js [形状名]`（`ASCII=1` 看轮廓、`DIVIDE=5` 看分格；改了 `zodiacShapes.json` 必跑） |
@@ -40,7 +40,7 @@
 | 技术栈 | Taro 4.1.9 + React 18 + TypeScript 5 + Sass（CSS Modules）+ zustand + dayjs + classnames |
 | 设计稿基准 | 750rpx（`config/index.ts` 的 `designWidth: 375`，**代码里统一写 rpx**） |
 | 数据 | 纯本地，无后端、无登录、不涉及云开发 |
-| 进度 | M1 完成（36 关：初级/高级/困难 三档 × 12 关，尺寸 3×3→8×8 × 卡片造型 方形/圆形/生肖，每关限时、计时、音效、存档、星级结算）；M2/M3 见 §3 |
+| 进度 | M1 完成（36 关：初级/高级/困难 三档 × 12 关 = 前 6 关正序 + 后 6 关变体（初级/高级倒序、困难双色），尺寸 3×3→8×8，卡片造型 方形/圆形/生肖，每关限时、计时、音效、存档、星级结算（满星 3/4/5））；M2/M3 见 §3 |
 
 ---
 
@@ -84,9 +84,11 @@
 
 | 模块 | 文件 | 状态 | 说明 |
 | --- | --- | --- | --- |
-| 对局引擎 | `utils/gameEngine.ts` | ✅ 完成 | 纯函数状态机：建局/倒计时/判错/限时失败/暂停/恢复/冻结用时 |
-| 计分规则 | `utils/scoring.ts` | ✅ 完成 | 星级 + 罚时换算 |
-| 关卡生成器 | `data/levels.ts` | ✅ 完成 | 3 档 × 12 关 = 36 关，程序化生成；难度档 = 分类，卡片造型是档位皮肤（不在 UI 展示） |
+| 对局引擎 | `utils/gameEngine.ts` | ✅ 完成 | 纯函数状态机：建局/倒计时/判错/限时失败/暂停/恢复/冻结用时；目标推进按玩法分流（正序/双色递增、倒序递减），`getDoneCount` / `getCurrentTarget` 是进度展示的唯一来源 |
+| 计分规则 | `utils/scoring.ts` | ✅ 完成 | 星级 + 罚时换算；星级上限取该关满星（3/4/5），困难档多一档极速阈值 |
+| 关卡生成器 | `data/levels.ts` | ✅ 完成 | 3 档 × 12 关 = 36 关，程序化生成；每档前 6 关正序、后 6 关变体玩法（初级/高级倒序、困难双色），所以档内尺寸不重复；满星 3/4/5；难度档 = 分类，卡片造型是档位皮肤（不在 UI 展示） |
+| 玩法模式 | `types/game.ts` + `data/levels.ts` + `utils/gameEngine.ts` + `components/GridCell` | ✅ 完成 | `forward`（1→N²）/ `reverse`（N²→1）/ `alternate`（奇数格红、偶数格蓝，仍正序点）；倒序只改引擎推进方向，双色只改格子取色分支，互不影响 |
+| 满星阶梯 | `data/levels.ts` + `utils/scoring.ts` + `components/StarRating` | ✅ 完成 | 初级 3 / 高级 4 / 困难 5；高级靠「达标 + 零失误」拿满，困难靠「极速（gold×0.85）+ 零失误」拿满 |
 | 卡片分区几何 | `utils/circleLayout.ts` + `utils/silhouette.ts` | ✅ 完成 | 纯计算：圆形卡扇环（半径分圈 × 角度分格）；生肖卡轮廓追踪 + Voronoi 分格 |
 | 限时与失败 | `data/levels.ts` + `utils/gameEngine.ts` + `hooks/useGameEngine.ts` | ✅ 完成 | 每关按尺寸查限时表；倒计时归零即失败，不记成绩、不解锁下一关 |
 | 配色系统 | `styles/theme.scss` + `components/GridCell` | ✅ 完成 | 6 组「浅色底 + 同色系数字」成对循环；圆形卡青灰绿、生肖卡墨色线稿；页面柔光背景 |
@@ -115,7 +117,7 @@
 | 通关特效（格子依次消隐 + 粒子） | M2 | `pages/result` + 新组件 `ParticleLayer` | 能用 CSS 就不用 Canvas |
 | 主题换肤 / 背景图案 | M2 | `styles/theme.scss` + `ThemeProvider` 组件 + 存档加 `settings.theme` | 变量已预留结构 |
 | 成就系统（6 枚徽章） | M2 | 新建 `utils/achievements.ts` + `data/achievements.ts` | 存档需加 `achievements: string[]` |
-| 新玩法：倒序 / 双色交替 / 静默变位 | M2 | `types/game.ts` 加 `mode`，`data/levels.ts` 配置，引擎推进策略 | 当前只有正序 |
+| 新玩法：静默变位 | M2 | `types/game.ts` 加 mode，`data/levels.ts` 配置，引擎推进策略 | 倒序 / 双色交替已在档内后 6 关落地，只剩静默变位 |
 | 双路线反馈（速度评级 / 精准评级） | M2 | `pages/result` | 给玩家第二个进步维度 |
 | 排行榜（云端） | M3 | 新建 `services/rank.ts`（接口占位）+ `pages/rank` | 需服务端校验成绩时间戳防作弊 |
 | 分享海报 | M3 | `pages/result` | |
@@ -130,8 +132,10 @@
 | 无限关卡 / 限时倒计时 / 超时失败 / 卡片造型 × 尺寸组合 | ✅ 9/9 通过（60 关生成、剩余+用时双计时、点对不改底色、超时失败不记档且无「下一关」、圆形卡内接网格、生肖卡小格无图案） |
 | 三档分类 / 圆形卡圆盘分区 / 生肖卡轮廓内不规则格 | ✅ 7/7 通过（分类仅 初级/高级/困难、9 格呈 1+3+5 半径分组、36 格数字 1~36 无重复、生肖 9 格 clip-path 互不相同、方形卡无 clip-path、扇环点击命中、无编译错误） |
 | 生肖卡重构（12 生肖轮廓 + 轮廓内 Voronoi 分格 + 墨色线稿） | ✅ 12/12 读图核验 + 交互核验（`node scripts/preview-shapes.js` 确认 12 形状全部单连通、面积 22%~45%、3×3~8×8 共 72 种组合全部划分成功且最小格 ≥19rpx；浏览器实测卡片底色 `rgb(47,47,51)`、3×3 有 9 格 / 8×8 有 64 格且 clip-path 互不相同、点击推进目标 1→2、圆形卡 9 格未受影响；用 qianwen-vision 读截图，12 生肖中 11 个「清晰可辨」、虎为「猫科动物」） |
+| 玩法模式 / 满星阶梯 / 成绩展示 / 配色加深 | ✅ 13 项浏览器实测通过（三档星级总数 36/48/60；第 7~12 关徽标带「· 倒序 / · 双色」；正序 1→9 与倒序 9→1 的「当前目标 / 已完成」逐格联动正确；双色关 9 格实测 `toneOdd/toneEven` 且奇红偶蓝；圆形卡仍走 6 色循环无回归；结算页已无「三星目标」文案、困难档结算 5 星位；我的页成绩显示「初级 · 第 1 关 / 1.22″」且无「未知关卡 / NaN″」；格子描边 rgb(230,213,204)、6 色底色互异） |
 | 控制台报错 | ✅ 无阻断性报错（仅有 Taro 运行时未就绪时丢弃一条日志的 warn） |
 | 真机（手指点击手感、震动、音效实际播放） | ⬜ **未验证**，下次改动建议扫码真机复验 |
+| 预览服务掉线恢复 + 「我的」页列表 key 修复 | ✅ 浏览器实测通过（重启后首页→关卡→点第 1 关正常进入对局页，无「应用程序异常」/`ChunkLoadError`，可通关并写档；「我的」页今日/最近成绩列表正常渲染，控制台不再出现 `unique "key" prop` 警告，无新增报错） |
 
 ---
 
@@ -142,17 +146,18 @@
 | 常量 | 值 | 位置 | 联动影响 |
 | --- | --- | --- | --- |
 | `COUNTDOWN_SECONDS` | 3 | `utils/gameEngine.ts` | 开局倒计时秒数，改完检查对局页遮罩文案 |
-| `ERROR_PENALTY` | 1500 ms | `utils/scoring.ts` | 罚时；对局页 footer 文案「每次罚时 1.5s」写死了数字，需同步 |
+| `ERROR_PENALTY` | 150 ms | `utils/scoring.ts` | 罚时；对局页与结算页都按 **2 位小数**读它（`formatSeconds(…, 2)` → `0.15″`），关卡页 footer 的「点错罚时 0.15s」是写死文案，改数值要一起改 |
 | `ERROR_FLASH_MS` | 420 ms | `utils/gameEngine.ts` | 错误格子红闪时长；与 `GridCell` 的 `cellShake` 动画时长（0.3s）相关联 |
 | `RECENT_LIMIT` | 10 | `store/useSaveStore.ts` | 存档保留最近成绩条数；首页只展示 5 条 |
 | `TICK_INTERVAL` | 50 ms | `components/TimerBar/index.tsx` | 计时刷新频率 |
 | `SAVE_STORAGE_KEY` | `'shuerte_save'` | `services/storage.ts` | **改名字 = 老用户存档全部丢失**；加字段请走 persist `version` + migrate |
 | `SIZE_THRESHOLDS` | 3~8 每尺寸一组（3×3: 6″/9″ … 8×8: 95″/125″） | `data/levels.ts` | **每个尺寸都必须有阈值**，缺失会直接 throw；新增尺寸必须补一行 |
-| `SIZE_TIME_LIMITS` | 3~8 每尺寸一组（3×3: 15″、4×4: 25″、5×5: 40″、6×6: 60″、7×7: 85″、8×8: 115″） | `data/levels.ts` | 每关限时；新增尺寸必须补一行，否则同样 throw |
-| `TOTAL_ROUNDS`→`TIER_BLUEPRINTS` | 3 档（初级/高级/困难）× 12 关 = 36 关 | `data/levels.ts` | 加档位就往 `TIER_BLUEPRINTS` 加一项；`MAX_STARS = 108`、首页「/ 108」是算出来的 |
-| `CYCLES_PER_TIER` | 2 | `data/levels.ts` | 每档把尺寸阶梯走两遍，第二遍时间标准更紧；改它同时改 `LEVELS_PER_TIER` |
+| `SIZE_TIME_LIMITS` | 3~8 每尺寸一组（3×3: 15″、4×4: 25″、5×5: 40″、6×6: 70″、7×7: 95″、8×8: 125″） | `data/levels.ts` | 每关限时；6×6 起各比基础表多 10 秒（大尺寸更吃时间）；新增尺寸必须补一行，否则同样 throw |
+| `TOTAL_ROUNDS`→`TIER_BLUEPRINTS` | 3 档（初级/高级/困难）× 12 关 = 36 关；每档 `maxStars` = 3/4/5、`variant` = 倒序/倒序/双色 | `data/levels.ts` | 加档位就往 `TIER_BLUEPRINTS` 加一项（`maxStars` / `variant` 都在里面配）；`MAX_STARS = 144`（12×3 + 12×4 + 12×5）是算出来的，别写死 |
+| `PLATINUM_RATIO` | 0.85 | `data/levels.ts` | 困难档的「极速」阈值 = gold × 0.85；只有 `maxStars >= 5` 的档位会生成它，其余档 `platinum = null`（星级判定直接跳过） |
+| `CYCLES_PER_TIER` | 2 | `data/levels.ts` | 每档两轮：第一轮正序走完尺寸阶梯，第二轮**换变体玩法**（不再重复正序关）；改它同时改 `LEVELS_PER_TIER` |
 | `cycleFactor` | 每循环收紧 3%，最低 0.7 | `data/levels.ts` | 同时作用于星级阈值与限时，是「不停关卡」的难度曲线 |
-| 档位 → 卡片造型 | 初级=方形、高级=圆形、困难=生肖 | `data/levels.ts` `TIER_BLUEPRINTS` | 造型是档位皮肤，**不在 UI 上作为分类展示**；改这里会同时改三档的视觉 |
+| 档位 → 卡片造型 / 满星 / 变体玩法 | 初级=方形·3 星·倒序、高级=圆形·4 星·倒序、困难=生肖·5 星·双色 | `data/levels.ts` `TIER_BLUEPRINTS` | 造型是档位皮肤，**不在 UI 上作为分类展示**；改这里会同时改三档的视觉、满星上限与后半段玩法 |
 | `starGate` | 0 / 8 / 16 | `data/levels.ts` | 跨档门槛，关卡页与结算页的解锁提示文案会读它 |
 | 生肖轮转 | 生肖档 12 关 = 12 生肖各一次 | `data/levels.ts` `zodiacIndex` | 改每档关数会影响生肖覆盖数量 |
 | 关卡锁态 | 由 `utils/progress.ts` 的 `isLevelUnlocked` / `isChapterUnlocked` 统一判断 | **当前 `UNLOCK_ALL_LEVELS = true`（测试期临时开放全部关卡）**，改回 `false` 即恢复解锁规则 |
@@ -166,7 +171,7 @@
 | 生肖卡字号 | `silhouette3~8` = 40/34/30/24/20/16rpx | `components/GameGrid/index.module.scss` | 比方形卡小，因为轮廓内格子比同尺寸规整网格小（8×8 最小格约 19rpx，是真机可读的下限） |
 | 圆形卡内缩 | 5%（`.circleArea`） | `components/GameGrid/index.module.scss` | 让最外圈扇环不贴到圆边；调大等于整体缩小 |
 
-**星级规则**（`utils/scoring.ts`）：用时 ≤ 3 星阈值 → 3 星；≤ 2 星阈值 → 2 星；否则 1 星；**0 失误额外 +1 星（上限 3 星）**。速度与精准是两条并行路线，改规则时不要破坏这一点。
+**星级规则**（`utils/scoring.ts`）：用时 ≤ gold 阈值 → 3 星；≤ silver → 2 星；否则 1 星；困难档 ≤ platinum（= gold × 0.85）→ 4 星；**0 失误额外 +1 星，上限是该关满星（初级 3 / 高级 4 / 困难 5）**。满星只在零失误时拿得到，速度与精准是两条并行路线，改规则时不要破坏这一点。
 
 **存档契约**（`shuerte_save`）：
 
@@ -260,13 +265,14 @@ totalGames  streakDays  lastPlayedDate  recent[≤10]  settings{ sound, haptics 
 | 生肖「虎」偏猫科 | 剪影层面虎与猫无法区分（圆耳 + 四足 + 长尾），读图核验结论是「猫科动物」而非「虎」 | 生肖语境下成立；若要更明确需加条纹一类纹理信息，但小格上放图案会干扰扫数字 |
 | `.env` 里有 API key | 项目根目录 `.env` 存了 `DASHSCOPE_API_KEY`（仅用于开发期用 qianwen-vision 读参考图/截图核验），当前项目未接入 git | `git init` 时**必须**先把 `.env` 加进 `.gitignore` |
 | **⚠️ 关卡解锁被临时关闭（测试期）** | `utils/progress.ts` 的 `UNLOCK_ALL_LEVELS = true`，任意关卡可直接进入，UI 也不再显示锁态 | **用户测试完成后需改回 `false` 恢复解锁规则**（档内顺序解锁 + 跨档星星门槛） |
+| **⚠️ H5 预览服务会掉线（报「应用程序异常」）** | 预览壳的云沙箱会话会失效（`.pai/pai.log` 里表现为每 10s `WebSocket ... Unexpected server response: 404`），随后 `preview-server.js` 在 `updateCloudDev` 时抛 `WebSocket is not open: readyState 0 (CONNECTING)` 直接崩溃。此时首页/关卡页等**已加载并缓存**的 chunk 仍能显示，只有需要新拉路由 chunk 的页面（如对局页）会弹「应用程序异常」——错误信息是 `Loading chunk src_pages_game_index_tsx failed.`，堆栈是 `ChunkLoadError` | **这不是业务代码 Bug**。恢复办法：重跑 §0 的 preview-server 命令（端口复用 57544，URL 不变），**然后必须重新打开/硬刷新预览页**（重建后 chunk hash 变了，旧标签页持的是失效构建）。**切勿删 `.pai/pai-preview-server.lock`** |
 
 **关键决策（改代码前先理解为什么）**
 
 | 决策 | 理由 |
 | --- | --- |
-| 点错罚时 1.5s，而不是只记次数 | 只记错误数会被「乱点流」绕过（手速够快蒙也能过）。加罚时后乱点成本高于收益，玩家自然转向「看准再点」，这才是舒尔特的训练价值 |
-| 0 失误额外 +1 星（上限 3 星） | 让「手速」和「精准」成为两条并行追求路线，避免只有一种最优玩法 |
+| 点错要罚时（`ERROR_PENALTY`，当前 150 ms），而不是只记次数 | 只记错误数会被「乱点流」绕过（手速够快蒙也能过）。加罚时后乱点成本高于收益，玩家自然转向「看准再点」，这才是舒尔特的训练价值。**注意：罚时数值当前是 150 ms，而最初的设计口径是 1500 ms**，改回时需同步 README 与关卡页 footer 文案 |
+| 0 失误额外 +1 星（上限为该关满星 3/4/5） | 让「手速」和「精准」成为两条并行追求路线，避免只有一种最优玩法；满星只在零失误时拿得到，高难档有 4~5 颗星的进步空间 |
 | 计时用 `Date.now()` 差值，不用定时器累加 | 小程序定时器会漂移、切后台会被节流；定时器只负责刷新显示 |
 | 切后台自动暂停（`useDidHide`） | 否则「切出去等时间」的玩法会污染成绩 |
 | 方格用 `padding-bottom` 百分比撑正方形 | 只依赖容器宽度，3×3~8×8 与所有卡片造型共用一套布局，不写死 px |
@@ -287,6 +293,14 @@ totalGames  streakDays  lastPlayedDate  recent[≤10]  settings{ sound, haptics 
 | 限时失败不写存档、不解锁下一关 | 失败必须是「有代价的」才有张力，否则乱点凑数也能推进；同时不给失败记档，避免污染最佳成绩与成就统计 |
 | 点对不改变格子底色，只播一次点击动效 | 点对后变色会把「已完成」变成视觉信息，玩家可以靠颜色扫格子，削弱「记忆并按顺序点击」的训练目标；进度改由顶部「已完成 x/N」承担 |
 | 小格字号用 em 相对卡片基准字号 | 「尺寸 × 卡片造型」共 18 种组合，用 em 只需维护 6 档字号 + 每种造型一个基准字号，不用写组合矩阵 |
+| 档内第二轮的重复关卡改成变体玩法（倒序 / 双色） | 原来每档把 3×3→8×8 走两遍，第 7~12 关和第 1~6 关完全一样，玩家看到的是「重复关卡」。加一层 `mode` 后尺寸阶梯仍走一遍，但第二轮换了规则，档内 12 关没有一关重复——比单纯砍掉 6 关（会丢掉 12 生肖覆盖）保留了更多内容 |
+| 倒序只改引擎的目标推进方向，正序/双色仍递增 | 三种玩法只在「下一个目标是什么」这一点分叉，`createGame` 定初值、`tapCell` 定推进与结束判据，其余（判错、罚时、限时、结算）完全共用，扩展成本最低 |
+| 双色交替只配在困难档（生肖卡） | 双色把注意力从「形状」转到「奇偶」，正好叠在扫视最难的生肖卡上；初级/高级保持 6 色循环，避免一上手就要同时记「顺序 + 奇偶」两套规则 |
+| 满星改为初级 3 / 高级 4 / 困难 5（困难多一档极速阈值） | 高难档需要更细的进步粒度；初级规则一字未动（达标 3 星、零失误 +1）保证新手手感不回归；高级靠「达标 + 零失误」即可满星，困难再加一档 `platinum`（gold×0.85）作为第 5 颗星的唯一入口，让「更快」在困难档才有意义 |
+| 满星上限取「该关满星」而不是固定 3 | `calcStars` 的最后一步是 `Math.min(maxStars, stars)`，加档位/改满星只改 `TIER_BLUEPRINTS` 一处，计分函数不需要分支 |
+| 结算页不再展示星级规则文案 | 玩家要看的是「这局几星」，不是「几秒对应几星」；规则说明留在文档里，失败时仍给一行失败原因（罚时与「重打本关」），因为那是玩家需要立刻知道的信息 |
+| 格子底色加深 + 描边加深 | 原来 6 组底色都在 96% 亮度以上、描边 `#f0e8e4` 几乎看不见，相邻格边界糊在一起。底色压到 88% 上下、描边改成 `#e6d5cc`，边界清晰但仍是「浅色底 + 同色系数字」的观感；错误底色同步加深（否则点错的格子反而比普通格更浅） |
+| 「我的」页成绩直接用成绩记录自带的字段 | 之前读的是不存在的 `level.name` / `result.duration`，渲染出「未知关卡 / NaN″」。改为优先用 `getLevelById` 拿「章节 · 第 N 关」，取不到时回落到记录自身的 `index`/`size`，用时统一读 `result.elapsed`——不再依赖可能对不上的关卡表 |
 
 ---
 
@@ -303,6 +317,9 @@ totalGames  streakDays  lastPlayedDate  recent[≤10]  settings{ sound, haptics 
 | 2026-09-21 | **临时**：按用户要求关闭关卡禁用（`utils/progress.ts` 的 `UNLOCK_ALL_LEVELS = true`），测试期任意关卡可直接进入 | 待用户测试完成后改回 `false` |
 | 2026-09-21 | 生肖卡重构（按 `docs/refs/3.png` 参考图的线稿风）：① 修掉轮廓生成的真 bug —— 追踪出的边界点被**排序**后才做平滑，边界顺序被打乱，导致 clip-path 一直是乱的（这是历史上「生肖形状怎么改都不对」的根因）；② 12 生肖全部重画为「侧身朝右、突出角/耳/尾/腿」的椭圆并集，单连通、面积 22%~45%；③ 分格从「格心 + 固定小方块」改为**多源 BFS 生长的 Voronoi 划分**，格子紧贴拼合、铺满整条轮廓，每格是不规则多边形；④ 视觉改墨色线稿风：卡片底色 = 墨色，格子向形心收缩留缝，缝隙露出墨色即轮廓勾边 + 格线；⑤ 删掉 `utils/cardLayout.ts`（拆成 `circleLayout.ts` + `silhouette.ts`）；⑥ 重写 `scripts/preview-shapes.js`，新增连通性 / 面积 / 各尺寸分格可行性 / Voronoi ASCII 预览四项自检 | 自检脚本 12 形状 × 6 尺寸 72 组合全通过；浏览器实测 3×3=9 格、8×8=64 格、点击推进、圆形卡无回归；qianwen-vision 读 12 张截图核验，11 个「清晰可辨」，虎为「猫科动物」 |
 | 2026-09-23 | 打通 miniprogram-ci 上传链路：① 修掉上传阻塞 bug —— tabBar 图标由 `.svg` 改为 `.png`（微信小程序 tabBar 只支持 PNG/JPG，`.svg` 会被 `miniprogram-ci` 以 `Wrong file format` 拒绝），新增一次性脚本 `scripts/convert-svg-to-png.js` 转换 6 个图标并同步 `src/app.config.ts`；② `README.md` 的「编译为微信小程序」改为 miniprogram-ci 发布步骤（上传密钥 `private.wx.key`、IP 白名单、`npm run upload`、开发版本→体验版→发布、常见报错） | `npm run build:weapp` 编译通过；`npm run upload` 成功（`上传成功: { subPackageInfo: [{ name: '__FULL__', size: 668842 }] }`，版本 test1.0.0） |
+| 2026-09-23 | 新增一键发布命令 `npm run release`（`config/release.js`：校验 `private.wx.key` → `npm run build:weapp` → `npm run upload`，任一步失败即中止）；`config/upload.js` 抽出 `VERSION` / `DESC` 常量并把版本号由 `test1.0.0` 规范为 `1.0.0`，补 `catch` 让失败时输出清晰错误并 `exit 1`（原先是未捕获异常堆栈） | `node --check` 语法校验通过、`package.json` JSON 校验通过；待首次实跑 `npm run release` 验证 |
+| 2026-09-23 | 六项优化：① 结算页移除星级目标提示（失败仍保留失败原因）；② 修复「我的」页成绩列表（原来读不存在的 `level.name` / `result.duration`，显示成「未知关卡 / NaN″」，改为「章节 · 第 N 关」+ `result.elapsed`）；③ 档内重复关卡改为变体玩法填位 —— 新增 `GameMode`，初级/高级后 6 关倒序、困难后 6 关双色，尺寸仍 3×3→8×8 各一次（`gameEngine` 目标推进分流 + `getDoneCount`/`getCurrentTarget` 统一进度来源 + `GridCell` 加 `toneOdd/toneEven` 取色分支）；④ 6×6 起限时各 +10s；⑤ 格子底色与描边加深、错误底色同步加深；⑥ 满星改为初级 3 / 高级 4 / 困难 5（困难新增极速阈值 `gold × 0.85`，`MAX_STARS` 144）；顺带把罚时文案改成 2 位小数（原来 150ms 显示成 `0.1″`） | 浏览器端 13 项实测通过（详见 §3.3），其中双色配色首轮漏传 `alternate` 已发现并修复复验 |
+| 2026-10-14 | ① 修复「我的」页列表 `key` 警告：`GameResult` 里并没有 `id` 字段，两处列表却写 `key={result.id}`，导致全部 key 为 `undefined`；改用 `playedAt + levelId` 做 key（同一次渲染内唯一且稳定，且兼容缺 `id` 的老存档），`pages/mine/index.tsx` 改 2 行；② 排查「点开关卡后显示应用程序异常」：定位为 H5 预览服务云沙箱会话失效导致 `chunk` 404 的 `ChunkLoadError`，**非业务代码 Bug**，重启预览服务即恢复（已记入 §8 已知限制） | 重启预览服务后浏览器实测：首页→关卡→点第 1 关正常进入对局页（3×3 九格 / 当前目标 / 剩余倒计时 / 3-2-1 遮罩齐全），可通关并写档，无「应用程序异常」与 `ChunkLoadError`；「我的」页两个成绩列表正常渲染，控制台无 `unique "key" prop` 警告、无新增报错 |
 
 ---
 

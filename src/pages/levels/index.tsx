@@ -20,6 +20,7 @@ const LevelsPage: React.FC = () => {
   const chapter = getChapterById(activeChapterId) ?? CHAPTERS[0];
   const chapterLevels = getChapterLevels(chapter.id);
   const chapterStars = chapterLevels.reduce((sum, item) => sum + (stars[item.id] ?? 0), 0);
+  const chapterMaxStars = chapterLevels.reduce((sum, item) => sum + item.maxStars, 0);
   const chapterUnlocked = isChapterUnlocked(chapter, totalStars);
 
   const handleLevelClick = (level: LevelConfig) => {
@@ -48,7 +49,7 @@ const LevelsPage: React.FC = () => {
         <View className={styles.chapterHead}>
           <Text className={styles.chapterTitle}>{chapter.title}</Text>
           <Text className={styles.chapterStars}>
-            {chapterStars} / {chapterLevels.length * 3} 星
+            {chapterStars} / {chapterMaxStars} 星
           </Text>
         </View>
         <Text className={styles.chapterSubtitle}>{chapter.subtitle}</Text>
@@ -76,7 +77,7 @@ const LevelsPage: React.FC = () => {
 
       <View className={styles.tip}>
         <Text className={styles.tipText}>
-          每关都有倒计时，超时即失败；点错罚时 1.5s，看准再点比手快更划算
+          每关都有倒计时，超时即失败；点错罚时 0.15s，看准再点比手快更划算
         </Text>
       </View>
     </View>

@@ -2,6 +2,10 @@
 const ci = require('miniprogram-ci');
 const path = require('path');
 
+// 每次上传前修改这两项
+const VERSION = '1.0.0'; // 版本号，需在版本管理中与历史版本区分
+const DESC = '首个版本'; // 本次更新说明
+
 (async () => {
   const project = new ci.Project({
     appid: 'wx25bf5262c669e9a9',
@@ -13,8 +17,8 @@ const path = require('path');
 
   const uploadResult = await ci.upload({
     project,
-    version: 'test1.0.0',
-    desc: '测试版本',
+    version: VERSION,
+    desc: DESC,
     setting: {
       es6: true,
       es7: true,
@@ -24,4 +28,7 @@ const path = require('path');
   });
 
   console.log('上传成功:', uploadResult);
-})();
+})().catch((error) => {
+  console.error('[upload] 上传失败:', error?.message || error);
+  process.exit(1);
+});

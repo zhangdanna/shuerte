@@ -16,10 +16,20 @@ export type GamePhase = 'countdown' | 'playing' | 'paused' | 'finished' | 'faile
  */
 export type CardStyle = 'square' | 'circle' | 'zodiac';
 
+/**
+ * 玩法：档内前 6 关正序，后 6 关换变体玩法（尺寸仍是 3×3 → 8×8，所以不算重复关卡）
+ *   forward   正序：1 → size²
+ *   reverse   倒序：size² → 1
+ *   alternate 双色交替：奇数格红、偶数格蓝，仍按正序点击
+ */
+export type GameMode = 'forward' | 'reverse' | 'alternate';
+
 /** 星级阈值（毫秒） */
 export interface LevelThresholds {
   gold: number;
   silver: number;
+  /** 极速档阈值：达标之上再压一档，只有它 + 零失误才拿得到满星（仅困难档有，其余档为 null） */
+  platinum: number | null;
 }
 
 /** 关卡配置 */
@@ -40,6 +50,10 @@ export interface LevelConfig {
   cardStyle: CardStyle;
   /** 生肖造型时，卡片主题生肖在 ZODIAC_SHAPES 中的下标 */
   zodiacIndex: number | null;
+  /** 本关玩法 */
+  mode: GameMode;
+  /** 本关满星数：初级 3 / 高级 4 / 困难 5 */
+  maxStars: number;
   thresholds: LevelThresholds;
   /** 限时（毫秒）：倒计时归零仍未完成即挑战失败 */
   timeLimit: number;

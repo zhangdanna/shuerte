@@ -8,14 +8,14 @@ export const COUNTDOWN_SECONDS = 3;
 /** 错误格子的红闪时长（毫秒） */
 export const ERROR_FLASH_MS = 420;
 
-/** 建一局新游戏：数字乱序，等待倒计时结束才开始计时 */
+/** 建一局新游戏：数字乱序，等待倒计时结束才开始计时。倒序玩法从 size² 开始点 */
 export const createGame = (level: LevelConfig): GameState => {
   const cells: CellData[] = buildNumbers(level.size).map((value) => ({ value, status: 'idle' }));
   return {
     level,
     phase: 'countdown',
     cells,
-    target: 1,
+    target: level.mode === 'reverse' ? level.total : 1,
     errors: 0,
     penalty: 0,
     startedAt: null,
@@ -24,6 +24,17 @@ export const createGame = (level: LevelConfig): GameState => {
     errorIndex: null,
     finalElapsed: null
   };
+};
+
+/** 当前该点的数字（对局结束后仍夹在 1 ~ total 之间，供 HUD 展示） */
+export const getCurrentTarget = (state: GameState): number =>
+  Math.min(Math.max(state.target, 1), state.level.total);
+
+/** 已正确点击的格子数：倒序玩法目标递减，正序/双色递增 */
+export const getDoneCount = (state: GameState): number => {
+  const total = state.level.total;
+  const raw = state.level.mode === 'reverse' ? total - state.target : state.target - 1;
+  return Math.min(Math.max(raw, 0), total);
 };
 
 /**
@@ -80,8 +91,10 @@ export const tapCell = (
 
   const cells = state.cells.slice();
   cells[index] = { ...cell, status: 'done' };
-  const advanced: GameState = { ...state, cells, target: state.target + 1 };
-  if (advanced.target <= state.level.total) {
+  const reverse = state.level.mode === 'reverse';
+  const advanced: GameState = { ...state, cells, target: reverse ? state.target - 1 : state.target + 1 };
+  const finished = reverse ? advanced.target < 1 : advanced.target > state.level.total;
+  if (!finished) {
     return { state: advanced, feedback: { kind: 'correct', index, finished: false } };
   }
   const settled: GameState = {

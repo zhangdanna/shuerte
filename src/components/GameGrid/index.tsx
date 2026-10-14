@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View } from '@tarojs/components';
 import classnames from 'classnames';
-import { CardStyle, CellData } from '@/types/game';
+import { CardStyle, CellData, GameMode } from '@/types/game';
 import { buildCircleCells } from '@/utils/circleLayout';
 import { ZODIAC_SHAPES, buildSilhouetteCells, getShapeOutline, toClipPolygon } from '@/utils/silhouette';
 import GridCell from '@/components/GridCell';
@@ -20,6 +20,8 @@ interface GameGridProps {
   cardStyle: CardStyle;
   /** 生肖造型时的主题生肖下标 */
   zodiacIndex: number | null;
+  /** 玩法：双色交替时格子按奇偶上色 */
+  mode: GameMode;
   cells: CellData[];
   /** 非对局中（倒计时/暂停）时冻结点击 */
   frozen?: boolean;
@@ -37,10 +39,12 @@ const GameGrid: React.FC<GameGridProps> = ({
   size,
   cardStyle,
   zodiacIndex,
+  mode,
   cells,
   frozen = false,
   onTapCell
 }) => {
+  const alternate = mode === 'alternate';
   const circleCells = useMemo(
     () => (cardStyle === 'circle' ? buildCircleCells(size) : null),
     [cardStyle, size]
@@ -87,6 +91,7 @@ const GameGrid: React.FC<GameGridProps> = ({
                 clipPath={geometry.clipPath}
                 labelPosition={geometry}
                 absolute
+                alternate={alternate}
                 onTap={onTapCell}
               />
             );
@@ -118,6 +123,7 @@ const GameGrid: React.FC<GameGridProps> = ({
               clipPath={geometry.clipPath}
               labelPosition={geometry}
               absolute
+              alternate={alternate}
               onTap={onTapCell}
             />
           );
@@ -132,7 +138,13 @@ const GameGrid: React.FC<GameGridProps> = ({
         {cells.map((cell, index) => (
           <View key={cell.value} className={styles.cellWrap} style={gridSlotStyle(size)}>
             <View className={styles.cellInner}>
-              <GridCell value={cell.value} status={cell.status} index={index} onTap={onTapCell} />
+              <GridCell
+                value={cell.value}
+                status={cell.status}
+                index={index}
+                alternate={alternate}
+                onTap={onTapCell}
+              />
             </View>
           </View>
         ))}

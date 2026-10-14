@@ -93,14 +93,17 @@ export default function MinePage() {
           <View className={styles.resultList}>
             {todayResults.map((result) => {
               const level = getLevelById(result.levelId);
+              const title = level
+                ? `${level.chapterTitle} · 第 ${level.globalIndex} 关`
+                : `第 ${result.index} 关 · ${result.size}×${result.size}`;
               return (
-                <View key={result.id} className={styles.resultItem}>
+                <View key={`${result.playedAt}-${result.levelId}`} className={styles.resultItem}>
                   <View className={styles.resultInfo}>
-                    <Text className={styles.resultLevel}>{level?.name || '未知关卡'}</Text>
+                    <Text className={styles.resultLevel}>{title}</Text>
                     <Text className={styles.resultTime}>{formatRecordTime(result.playedAt)}</Text>
                   </View>
                   <View className={styles.resultStats}>
-                    <Text className={styles.resultDuration}>{formatSeconds(result.duration)}</Text>
+                    <Text className={styles.resultDuration}>{formatSeconds(result.elapsed)}</Text>
                     <Text className={styles.resultStars}>{'⭐'.repeat(result.stars)}</Text>
                   </View>
                 </View>
@@ -117,14 +120,17 @@ export default function MinePage() {
           <View className={styles.resultList}>
             {allRecentResults.map((result) => {
               const level = getLevelById(result.levelId);
+              const title = level
+                ? `${level.chapterTitle} · 第 ${level.globalIndex} 关`
+                : `第 ${result.index} 关 · ${result.size}×${result.size}`;
               return (
-                <View key={result.id} className={styles.resultItem}>
+                <View key={`${result.playedAt}-${result.levelId}`} className={styles.resultItem}>
                   <View className={styles.resultInfo}>
-                    <Text className={styles.resultLevel}>{level?.name || '未知关卡'}</Text>
+                    <Text className={styles.resultLevel}>{title}</Text>
                     <Text className={styles.resultTime}>{formatRecordTime(result.playedAt)}</Text>
                   </View>
                   <View className={styles.resultStats}>
-                    <Text className={styles.resultDuration}>{formatSeconds(result.duration)}</Text>
+                    <Text className={styles.resultDuration}>{formatSeconds(result.elapsed)}</Text>
                     <Text className={styles.resultStars}>{'⭐'.repeat(result.stars)}</Text>
                   </View>
                 </View>

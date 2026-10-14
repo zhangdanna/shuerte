@@ -18,6 +18,8 @@ interface GridCellProps {
   labelPosition?: { labelX: number; labelY: number };
   /** true = 用绝对定位铺满整张卡片（圆形卡）；不传 = 落在自己的格位里 */
   absolute?: boolean;
+  /** true = 双色交替玩法：按数字奇偶上色（奇数红 / 偶数蓝），不走 6 色循环 */
+  alternate?: boolean;
 }
 
 /**
@@ -27,14 +29,19 @@ interface GridCellProps {
  * （clipPath 与 labelPosition 都由 useMemo 产出，引用稳定，不会破坏 memo）。
  */
 const GridCell: React.FC<GridCellProps> = React.memo(
-  ({ value, status, index, onTap, clipPath, labelPosition, absolute = false }) => {
+  ({ value, status, index, onTap, clipPath, labelPosition, absolute = false, alternate = false }) => {
     const tone = ((value - 1) % TONE_COUNT) + 1;
+    const toneClass = alternate
+      ? value % 2 === 1
+        ? styles.toneOdd
+        : styles.toneEven
+      : styles[`tone${tone}`];
     const isAbsolute = absolute && labelPosition !== undefined;
     return (
       <View
         className={classnames(
           styles.cell,
-          styles[`tone${tone}`],
+          toneClass,
           clipPath !== undefined && styles.clipped,
           isAbsolute && styles.absolute,
           status === 'done' && styles.done,

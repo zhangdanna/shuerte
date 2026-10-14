@@ -4,12 +4,25 @@ import Taro, { useDidHide, useRouter } from '@tarojs/taro';
 import GameGrid from '@/components/GameGrid';
 import TimerBar from '@/components/TimerBar';
 import { EndPayload, useGameEngine } from '@/hooks/useGameEngine';
-import { getLevelById } from '@/data/levels';
+import { MODE_LABELS, getLevelById } from '@/data/levels';
 import { useSaveStore } from '@/store/useSaveStore';
 import { calcStars, ERROR_PENALTY } from '@/utils/scoring';
+import { getCurrentTarget, getDoneCount } from '@/utils/gameEngine';
 import { formatSeconds } from '@/utils/format';
 import { GameResult, LevelConfig } from '@/types/game';
 import styles from './index.module.scss';
+
+/** 倒计时遮罩里的玩法提示：先讲清怎么点，再报限时 */
+const buildCountdownTip = (level: LevelConfig): string => {
+  const limit = formatSeconds(level.timeLimit, 0);
+  if (level.mode === 'reverse') {
+    return `按倒序点击：从 ${level.total} 点回 1 · 限时 ${limit}`;
+  }
+  if (level.mode === 'alternate') {
+    return `奇数格红、偶数格蓝 · 依次点击 1 到 ${level.total} · 限时 ${limit}`;
+  }
+  return `按顺序点击 1 到 ${level.total} · 限时 ${limit}`;
+};
 
 const GameContent: React.FC<{ level: LevelConfig }> = ({ level }) => {
   const handleEnd = useCallback(
@@ -21,7 +34,7 @@ const GameContent: React.FC<{ level: LevelConfig }> = ({ level }) => {
         });
         return;
       }
-      const stars = calcStars(payload.elapsed, payload.errors, level.thresholds);
+      const stars = calcStars(payload.elapsed, payload.errors, level.thresholds, level.maxStars);
       const saveStore = useSaveStore.getState();
       const prevBest = saveStore.bestTimes[level.id];
       const isBest = prevBest === undefined || payload.elapsed < prevBest;
@@ -52,16 +65,18 @@ const GameContent: React.FC<{ level: LevelConfig }> = ({ level }) => {
     pause();
   });
 
-  const { phase, cells, target, errors } = state;
+  const { phase, cells, errors } = state;
   const total = level.total;
-  const doneCount = Math.min(Math.max(0, target - 1), total);
+  const currentTarget = getCurrentTarget(state);
+  const doneCount = getDoneCount(state);
+  const modeTag = level.mode === 'forward' ? '' : ` · ${MODE_LABELS[level.mode]}`;
 
   return (
     <View className={styles.page}>
       <View className={styles.hud}>
         <View className={styles.targetBlock}>
           <Text className={styles.hudLabel}>当前目标</Text>
-          <Text className={styles.targetValue}>{phase === 'finished' ? total : target}</Text>
+          <Text className={styles.targetValue}>{currentTarget}</Text>
         </View>
         <TimerBar getElapsed={getCurrentElapsed} timeLimit={level.timeLimit} running={phase === 'playing'} />
       </View>
@@ -80,6 +95,7 @@ const GameContent: React.FC<{ level: LevelConfig }> = ({ level }) => {
           size={level.size}
           cardStyle={level.cardStyle}
           zodiacIndex={level.zodiacIndex}
+          mode={level.mode}
           cells={cells}
           frozen={phase !== 'playing'}
           onTapCell={tap}
@@ -87,8 +103,8 @@ const GameContent: React.FC<{ level: LevelConfig }> = ({ level }) => {
       </View>
 
       <Text className={styles.hint}>
-        {level.chapterTitle} · 第 {level.globalIndex} 关 · 限时{' '}
-        {formatSeconds(level.timeLimit, 0)} · 每次失误罚时 {formatSeconds(ERROR_PENALTY, 1)}
+        {level.chapterTitle} · 第 {level.globalIndex} 关{modeTag} · 限时{' '}
+        {formatSeconds(level.timeLimit, 0)} · 每次失误罚时 {formatSeconds(ERROR_PENALTY, 2)}
       </Text>
 
       {phase === 'countdown' && (
@@ -96,9 +112,7 @@ const GameContent: React.FC<{ level: LevelConfig }> = ({ level }) => {
           <Text key={countdown} className={styles.countdown}>
             {countdown}
           </Text>
-          <Text className={styles.overlayTip}>
-            按顺序点击 1 到 {total} · 限时 {formatSeconds(level.timeLimit, 0)}
-          </Text>
+          <Text className={styles.overlayTip}>{buildCountdownTip(level)}</Text>
         </View>
       )}
 

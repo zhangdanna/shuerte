@@ -6,6 +6,7 @@ import {
   clearError,
   createGame,
   failByTimeout,
+  getDoneCount,
   getElapsed,
   pauseGame,
   resumeGame,
@@ -105,7 +106,7 @@ export const useGameEngine = (
         kind: 'failed',
         elapsed: getElapsed(failed, now),
         errors: failed.errors,
-        done: Math.max(0, failed.target - 1)
+        done: getDoneCount(failed)
       });
     }, TIMEOUT_CHECK_INTERVAL);
     return () => clearInterval(timer);

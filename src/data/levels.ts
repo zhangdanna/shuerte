@@ -1,4 +1,4 @@
-import { CardStyle, ChapterConfig, LevelConfig, LevelThresholds } from '@/types/game';
+import { CardStyle, ChapterConfig, GameMode, LevelConfig, LevelThresholds } from '@/types/game';
 import zodiacShapes from '@/data/zodiacShapes.json';
 
 /**
@@ -15,19 +15,23 @@ const SIZE_THRESHOLDS: Record<number, LevelThresholds> = {
   8: { gold: 95000, silver: 125000 }
 };
 
+/** 每关限时（毫秒）：6×6 起大尺寸明显更吃时间，在基础表上各加 10 秒 */
 const SIZE_TIME_LIMITS: Record<number, number> = {
   3: 15000,
   4: 25000,
   5: 40000,
-  6: 60000,
-  7: 85000,
-  8: 115000
+  6: 70000,
+  7: 95000,
+  8: 125000
 };
 
 /** 尺寸阶梯：3×3 起步，逐关 +1 到 8×8 */
 const SIZE_STEPS: number[] = [3, 4, 5, 6, 7, 8];
 
-/** 每档把尺寸阶梯走两遍：第二遍尺寸相同、时间标准更紧，形成档内递进 */
+/**
+ * 每档两轮：第一轮正序走完 3×3 → 8×8，第二轮尺寸相同但换变体玩法，
+ * 所以档内 12 关没有「同一个关卡出现两次」的重复感。
+ */
 const CYCLES_PER_TIER = 2;
 
 /**
@@ -41,11 +45,18 @@ const TIER_BLUEPRINTS: Array<{
   pace: string;
   cardStyle: CardStyle;
   starGate: number;
+  /** 每关满星：初级 3 / 高级 4 / 困难 5 */
+  maxStars: number;
+  /** 第二轮（后 6 关）的变体玩法 */
+  variant: GameMode;
 }> = [
-  { title: '初级', pace: '节奏舒缓', cardStyle: 'square', starGate: 0 },
-  { title: '高级', pace: '标准计时', cardStyle: 'circle', starGate: 8 },
-  { title: '困难', pace: '极限计时', cardStyle: 'zodiac', starGate: 16 }
+  { title: '初级', pace: '节奏舒缓', cardStyle: 'square', starGate: 0, maxStars: 3, variant: 'reverse' },
+  { title: '高级', pace: '标准计时', cardStyle: 'circle', starGate: 8, maxStars: 4, variant: 'reverse' },
+  { title: '困难', pace: '极限计时', cardStyle: 'zodiac', starGate: 16, maxStars: 5, variant: 'alternate' }
 ];
+
+/** 极速档系数：困难档在 gold 阈值上再压 15%，是第 5 颗星的唯一入口 */
+const PLATINUM_RATIO = 0.85;
 
 /** 每档关数 = 尺寸阶梯 × 循环数 */
 const LEVELS_PER_TIER = SIZE_STEPS.length * CYCLES_PER_TIER;
@@ -67,12 +78,14 @@ const buildChapter = (tierIndex: number): ChapterConfig => {
   };
 };
 
-const buildLevels = (chapter: ChapterConfig, tierIndex: number): LevelConfig[] =>
-  Array.from({ length: LEVELS_PER_TIER }, (_, i) => {
+const buildLevels = (chapter: ChapterConfig, tierIndex: number): LevelConfig[] => {
+  const blueprint = TIER_BLUEPRINTS[tierIndex];
+  return Array.from({ length: LEVELS_PER_TIER }, (_, i) => {
     const index = i + 1;
     const size = SIZE_STEPS[i % SIZE_STEPS.length];
-    const cycleInTier = Math.floor(i / SIZE_STEPS.length) + 1;
-    const globalCycle = tierIndex * CYCLES_PER_TIER + cycleInTier;
+    // 0 = 第一轮（正序），1 = 第二轮（变体玩法）
+    const pass = Math.floor(i / SIZE_STEPS.length);
+    const globalCycle = tierIndex * CYCLES_PER_TIER + pass + 1;
     const factor = cycleFactor(globalCycle);
     const thresholds = SIZE_THRESHOLDS[size];
     const timeLimit = SIZE_TIME_LIMITS[size];
@@ -89,15 +102,21 @@ const buildLevels = (chapter: ChapterConfig, tierIndex: number): LevelConfig[] =
       size,
       total: size * size,
       cardStyle: chapter.cardStyle,
+      mode: pass === 0 ? 'forward' : blueprint.variant,
       // 生肖档共 12 关，正好把 12 生肖依次走一遍
       zodiacIndex: chapter.cardStyle === 'zodiac' ? (index - 1) % zodiacShapes.length : null,
+      maxStars: blueprint.maxStars,
       thresholds: {
         gold: Math.round(thresholds.gold * factor),
-        silver: Math.round(thresholds.silver * factor)
+        silver: Math.round(thresholds.silver * factor),
+        // 只有需要满星 5 的档位配极速档，其余档位为 null（判定时直接跳过）
+        platinum:
+          blueprint.maxStars >= 5 ? Math.round(thresholds.gold * factor * PLATINUM_RATIO) : null
       },
       timeLimit: Math.round(timeLimit * factor)
     };
   });
+};
 
 export const CHAPTERS: ChapterConfig[] = TIER_BLUEPRINTS.map((_, tierIndex) => buildChapter(tierIndex));
 
@@ -120,5 +139,12 @@ export const getNextLevel = (id: string): LevelConfig | undefined => {
   return position >= 0 ? LEVELS[position + 1] : undefined;
 };
 
-/** 全部关卡拿满三星时的星星总数 */
-export const MAX_STARS = LEVELS.length * 3;
+/** 全部关卡拿满（按各档满星 3/4/5）时的星星总数 */
+export const MAX_STARS = LEVELS.reduce((sum, level) => sum + level.maxStars, 0);
+
+/** 玩法文案：关卡卡片、对局页统一取这里 */
+export const MODE_LABELS: Record<GameMode, string> = {
+  forward: '正序',
+  reverse: '倒序',
+  alternate: '双色'
+};

@@ -32,6 +32,23 @@ $digits: $cell-digit-1, $cell-digit-2, $cell-digit-3, $cell-digit-4, $cell-digit
   }
 }
 
+// 双色交替玩法：只看数字奇偶，奇数格红、偶数格蓝（与上面的 6 色循环互斥）
+.toneOdd {
+  background-color: $cell-alt-odd-tint;
+
+  .value {
+    color: $cell-alt-odd-digit;
+  }
+}
+
+.toneEven {
+  background-color: $cell-alt-even-tint;
+
+  .value {
+    color: $cell-alt-even-digit;
+  }
+}
+
 // 分区格子：形状由 clip-path 决定，所以不要边框和圆角（会被裁出残缺边框）
 .clipped {
   border: none;

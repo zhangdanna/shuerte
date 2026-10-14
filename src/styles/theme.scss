@@ -40,11 +40,13 @@ $color-divider: #f5ede8;
 
 // 方格（未点击 / 已完成 / 错误）
 $color-cell-bg: #ffffff;
-$color-cell-border: #f0e8e4;
+// 格子描边：比底色明显一档，否则同色系的相邻格边界看不出来
+$color-cell-border: #e6d5cc;
 $color-cell-text: #1a1d26;
 $color-cell-done-bg: #FF6B35;
 $color-cell-done-text: #ffffff;
-$color-cell-error-bg: #fff0ee;
+// 错误底色：必须比所有 $cell-tint-* 更深，否则点错的格子反而比普通格更浅
+$color-cell-error-bg: #f8cdc7;
 $color-cell-error-border: #f5483b;
 $color-cell-error-text: #d92d20;
 
@@ -69,15 +71,15 @@ $color-bg-bottom: #FFF0F5;
 
 // ============================================
 // 方格配色：底色与数字成对出现（红字配红底、蓝字配蓝底…），按数字 1..6 循环
-// 底色一律压到极浅，保证数字对比度足够；数字统一用中等深度的色相，避免荧光感
+// 底色保持浅色系（数字要读得清），但比白卡明显一档，相邻格的边界才分得出来
 // 注意：tone 数量必须与 GridCell/index.module.scss 的 $tone-count 一致
 // ============================================
-$cell-tint-1: #fff0ef; // 红粉
-$cell-tint-2: #fff6ea; // 橙杏
-$cell-tint-3: #f4f9e9; // 黄绿
-$cell-tint-4: #eaf7f1; // 青绿
-$cell-tint-5: #edf4fe; // 天蓝
-$cell-tint-6: #f5f1fd; // 薰衣草
+$cell-tint-1: #fadedd; // 红粉
+$cell-tint-2: #f9e7cd; // 橙杏
+$cell-tint-3: #e8f2d3; // 黄绿
+$cell-tint-4: #d7eee3; // 青绿
+$cell-tint-5: #dbe7f9; // 天蓝
+$cell-tint-6: #e6e0f9; // 薰衣草
 
 $cell-digit-1: #d64b4b;
 $cell-digit-2: #c0761a;
@@ -85,6 +87,12 @@ $cell-digit-3: #6b9a21;
 $cell-digit-4: #148f66;
 $cell-digit-5: #2f6fd0;
 $cell-digit-6: #7355c9;
+
+// 双色交替玩法（困难档后 6 关）：只看奇偶，奇数格红、偶数格蓝
+$cell-alt-odd-tint: #fadedd;
+$cell-alt-odd-digit: #d64b4b;
+$cell-alt-even-tint: #dbe7f9;
+$cell-alt-even-digit: #2f6fd0;
 
 // ============================================
 // 圆形卡配色（暖灰系）
