@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>眼力大作战 v2 · 视觉与音乐系统设计方案</title>
+<style>
+  :root{
+    --paper-0:#FBF6EE; --paper-1:#FFFDF8; --paper-2:#F3EADC; --line:#E7DBC8;
+    --ink-900:#1A1815; --ink-600:#55504A; --ink-400:#8C8478; --ink-200:#C6BDAE;
+    --sunset:#E85D2A; --sunset-deep:#C4461B; --sunset-soft:#FDEDE5;
+    --gold:#DFA22E; --brick:#BE4438; --indigo:#3A6EA5;
+    --serif:"Songti SC","STSong","Noto Serif SC",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--paper-0); color:var(--ink-900); font-family:var(--sans);
+    line-height:1.7; -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(rgba(26,24,21,.028) 1px, transparent 1px);
+    background-size:3px 3px;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:64px 40px 120px;}
+  @media(max-width:720px){.wrap{padding:40px 20px 80px;}}
+
+  /* ---------- header ---------- */
+  .eyebrow{font-size:12px;letter-spacing:.22em;color:var(--ink-400);text-transform:uppercase;margin-bottom:20px;}
+  h1{font-family:var(--serif);font-size:46px;line-height:1.25;font-weight:700;letter-spacing:-.01em;}
+  h1 em{font-style:normal;color:var(--sunset);}
+  .lede{margin-top:18px;font-size:16px;color:var(--ink-600);max-width:720px;}
+  .meta{margin-top:28px;display:flex;gap:10px;flex-wrap:wrap;}
+  .chip{font-size:12px;padding:5px 12px;border:1px solid var(--line);border-radius:999px;color:var(--ink-600);background:var(--paper-1);}
+  .rule{height:1px;background:var(--line);margin:52px 0;}
+
+  /* ---------- section ---------- */
+  section{margin-bottom:76px;}
+  .sec-num{font-family:var(--serif);font-size:13px;color:var(--sunset);letter-spacing:.18em;}
+  h2{font-family:var(--serif);font-size:30px;margin:6px 0 8px;letter-spacing:-.01em;}
+  .sub{color:var(--ink-400);font-size:14px;margin-bottom:28px;}
+  h3{font-size:16px;font-weight:600;margin:32px 0 12px;}
+  p{color:var(--ink-600);font-size:15px;margin-bottom:14px;}
+  p strong{color:var(--ink-900);font-weight:600;}
+
+  /* ---------- cards ---------- */
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:820px){.grid3,.grid2{grid-template-columns:1fr;}}
+  .card{background:var(--paper-1);border:1px solid var(--line);border-radius:16px;padding:24px;}
+  .card .k{font-size:11px;letter-spacing:.16em;color:var(--sunset);text-transform:uppercase;}
+  .card h4{font-family:var(--serif);font-size:19px;margin:8px 0 8px;}
+  .card p{font-size:14px;margin:0;color:var(--ink-600);}
+
+  /* ---------- palette ---------- */
+  .palette{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;}
+  @media(max-width:820px){.palette{grid-template-columns:repeat(4,1fr);}}
+  .sw{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper-1);}
+  .sw .c{height:64px;}
+  .sw .t{padding:8px 10px;font-size:10.5px;color:var(--ink-400);line-height:1.45;}
+  .sw .t b{display:block;color:var(--ink-900);font-size:11.5px;font-weight:600;}
+
+  /* ---------- phone mockup ---------- */
+  .stage{display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap;}
+  .phone{
+    width:300px;flex:0 0 auto;background:var(--paper-0);border:1px solid var(--line);
+    border-radius:34px;padding:14px;box-shadow:0 18px 48px rgba(26,24,21,.08);
+  }
+  .screen{background:var(--paper-0);border-radius:24px;padding:16px 14px 20px;position:relative;overflow:hidden;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--ink-400);}
+  .topbar .song{font-family:var(--serif);font-size:12.5px;color:var(--ink-900);}
+  .topbar .ic{display:flex;gap:8px;font-size:12px;color:var(--ink-400);}
+  .hud{display:flex;flex-direction:column;align-items:center;margin:14px 0 6px;}
+  .ring{position:relative;width:132px;height:132px;}
+  .ring .target{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:52px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
+    animation:breathe 2s ease-in-out infinite;
+  }
+  @keyframes breathe{0%,100%{transform:scale(1);opacity:.94;}50%{transform:scale(1.025);opacity:1;}}
+  .under-hud{display:flex;align-items:center;gap:14px;font-size:10.5px;color:var(--ink-400);margin-top:4px;}
+  .err{color:var(--brick);border:1px solid rgba(190,68,56,.28);border-radius:999px;padding:1px 7px;font-size:10px;}
+
+  .bars{display:flex;gap:4px;margin:16px 2px 14px;}
+  .bar{flex:1;height:3px;border-radius:2px;background:var(--paper-2);}
+  .bar.on{background:var(--sunset);}
+
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+  .cell{
+    aspect-ratio:1/1;background:var(--paper-1);border:1px solid var(--line);border-radius:7px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink-900);position:relative;
+  }
+  .cell.done{color:rgba(26,24,21,.34);}
+  .cell.done::after{content:"♪";position:absolute;right:3px;bottom:0px;font-size:7px;color:rgba(232,93,42,.5);}
+  .cell.target{border-color:var(--sunset);box-shadow:0 0 0 2px rgba(232,93,42,.14);}
+  .cell.err{background:var(--sunset-soft);border-color:var(--brick);color:var(--brick);}
+  .cell.alt{background:#EAF0F7;border-color:#CBD9E8;color:var(--indigo);}
+  .cell.altd{background:var(--sunset-soft);border-color:#F0C8B6;color:var(--sunset-deep);}
+
+  .caption{font-size:12px;color:var(--ink-400);margin-top:10px;text-align:center;}
+  .notes{flex:1;min-width:260px;}
+  .notes ul{list-style:none;margin-top:8px;}
+  .notes li{font-size:14px;color:var(--ink-600);padding:9px 0 9px 22px;position:relative;border-bottom:1px dashed var(--line);}
+  .notes li:last-child{border-bottom:none;}
+  .notes li::before{content:"♪";position:absolute;left:2px;top:8px;color:var(--sunset);font-size:12px;}
+  .notes li b{color:var(--ink-900);font-weight:600;}
+
+  /* ---------- music mapping ---------- */
+  .map{background:var(--paper-1);border:1px solid var(--line);border-radius:16px;padding:26px;overflow-x:auto;}
+  .map-row{display:flex;gap:10px;align-items:center;min-width:640px;}
+  .map-row + .map-row{margin-top:14px;}
+  .map-label{width:96px;flex:0 0 auto;font-size:11.5px;color:var(--ink-400);letter-spacing:.04em;}
+  .keys{display:flex;gap:6px;}
+  .key{
+    width:38px;height:44px;border:1px solid var(--line);border-radius:6px;background:var(--paper-0);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;
+  }
+  .key small{font-size:8.5px;color:var(--ink-400);font-weight:400;letter-spacing:.02em;}
+  .key.hit{background:var(--sunset);border-color:var(--sunset);color:#fff;}
+  .key.hit small{color:rgba(255,255,255,.75);}
+  .arrow{font-size:11px;color:var(--ink-200);padding:0 2px;}
+
+  /* ---------- IA ---------- */
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  @media(max-width:820px){.tabs{grid-template-columns:1fr 1fr;}}
+  .tab{background:var(--paper-1);border:1px solid var(--line);border-radius:14px;padding:18px;}
+  .tab .n{font-size:10.5px;letter-spacing:.14em;color:var(--ink-200);}
+  .tab h4{font-family:var(--serif);font-size:17px;margin:4px 0 10px;}
+  .tab ul{list-style:none;}
+  .tab li{font-size:12.5px;color:var(--ink-600);padding:4px 0 4px 12px;position:relative;}
+  .tab li::before{content:"";position:absolute;left:0;top:12px;width:4px;height:4px;border-radius:50%;background:var(--line);}
+  .tab li.hi::before{background:var(--sunset);}
+  .tab li.hi{color:var(--ink-900);}
+
+  /* ---------- suite table ---------- */
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);}
+  th{font-size:11px;letter-spacing:.1em;color:var(--ink-400);font-weight:500;text-transform:uppercase;}
+  td b{font-weight:600;}
+  tr.acc td{background:var(--sunset-soft);}
+  .num{font-variant-numeric:tabular-nums;}
+
+  /* ---------- roadmap ---------- */
+  .road{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  @media(max-width:820px){.road{grid-template-columns:1fr;}}
+  .step{border-top:2px solid var(--sunset);padding-top:14px;}
+  .step .p{font-size:11px;letter-spacing:.16em;color:var(--sunset);}
+  .step h4{font-family:var(--serif);font-size:18px;margin:6px 0 8px;}
+  .step p{font-size:12.5px;margin:0;}
+  .step .d{font-size:11px;color:var(--ink-200);margin-top:8px;}
+
+  .callout{
+    border-left:2px solid var(--sunset);background:var(--paper-1);
+    padding:18px 22px;border-radius:0 12px 12px 0;margin:22px 0;
+  }
+  .callout p{margin:0;font-size:14.5px;color:var(--ink-900);}
+  .callout span{display:block;font-size:12px;color:var(--ink-400);margin-top:6px;}
+
+  footer{border-top:1px solid var(--line);padding-top:24px;font-size:12px;color:var(--ink-400);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Design Proposal · v2.0</div>
+  <h1>一张乐谱纸，<br />和一场<em>属于你的演奏</em>。</h1>
+  <p class="lede">
+    眼力大作战 v2 的设计方案：把 64 个彩色数字收敛成一张安静的纸面，把每一次正确点击变成一枚琴键。
+    玩家不再只是"点完一关"，而是"弹完一首曲子"——这是本方案里唯一真正新的东西。
+  </p>
+  <div class="meta">
+    <span class="chip">视觉：乐谱纸 · 墨水与暖光</span>
+    <span class="chip">机制：格子即琴键</span>
+    <span class="chip">结构：4 Tab</span>
+    <span class="chip">不改玩法与星级</span>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- 01 -->
+  <section>
+    <div class="sec-num">01 — 三个判断</div>
+    <h2>先定三条不能动的原则</h2>
+    <p class="sub">后面所有的设计选择，都是这三条的推论。</p>
+    <div class="grid3">
+      <div class="card">
+        <div class="k">Principle 01</div>
+        <h4>音符顺序 = 点击顺序</h4>
+        <p>倒序关不是"倒放音乐"，而是把数字与乐谱位置反向映射。乐谱永远正序，只有数字的排列在变。这是音乐系统能成立的前提。</p>
+      </div>
+      <div class="card">
+        <div class="k">Principle 02</div>
+        <h4>不放背景音乐</h4>
+        <p>只有玩家自己弹出的声音。既省资源、又契合"专注训练"的定位，还让每一次点击都有"是我弹的"的归属感。</p>
+      </div>
+      <div class="card">
+        <div class="k">Principle 03</div>
+        <h4>音乐不碰星级</h4>
+        <p>星级仍由用时与失误决定。音乐只产出"演奏评级 S/A/B/C"。两套评价体系一旦交叉，老玩家的成绩就失真了。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section>
+    <div class="sec-num">02 — 视觉</div>
+    <h2>把注意力还给玩法</h2>
+    <p class="sub">现状问题：6 色循环的格子，在 8×8 时是 64 个彩色块——颜色成了额外的搜索维度，画面"花"而不"简"。</p>
+
+    <h3>色板：纸、墨、一点橙</h3>
+    <div class="palette">
+      <div class="sw"><div class="c" style="background:#FBF6EE"></div><div class="t"><b>paper-0</b>页面底</div></div>
+      <div class="sw"><div class="c" style="background:#FFFDF8"></div><div class="t"><b>paper-1</b>卡面</div></div>
+      <div class="sw"><div class="c" style="background:#F3EADC"></div><div class="t"><b>paper-2</b>凹槽</div></div>
+      <div class="sw"><div class="c" style="background:#E7DBC8"></div><div class="t"><b>line</b>描边</div></div>
+      <div class="sw"><div class="c" style="background:#1A1815"></div><div class="t"><b>ink-900</b>数字</div></div>
+      <div class="sw"><div class="c" style="background:#8C8478"></div><div class="t"><b>ink-400</b>辅助</div></div>
+      <div class="sw"><div class="c" style="background:#E85D2A"></div><div class="t"><b>sunset</b>强调</div></div>
+      <div class="sw"><div class="c" style="background:#DFA22E"></div><div class="t"><b>gold</b>奖励</div></div>
+      <div class="sw"><div class="c" style="background:#BE4438"></div><div class="t"><b>brick</b>错误</div></div>
+      <div class="sw"><div class="c" style="background:#3A6EA5"></div><div class="t"><b>indigo</b>双色关</div></div>
+      <div class="sw"><div class="c" style="background:#FDEDE5"></div><div class="t"><b>sunset-soft</b>浅强调</div></div>
+      <div class="sw"><div class="c" style="background:#C4461B"></div><div class="t"><b>sunset-deep</b>按下</div></div>
+    </div>
+    <p style="margin-top:18px;font-size:13.5px;">
+      一屏内只允许一个强调色出现，且面积 &lt; 8%；取消所有彩色阴影，纸感靠 <b>1px 描边 + 极浅投影</b>。
+    </p>
+
+    <h3>对局页：目标数字成为主角</h3>
+    <div class="stage">
+      <div>
+        <div class="phone">
+          <div class="screen">
+            <div class="topbar">
+              <div class="song">星屑 · 初级 3/12</div>
+              <div class="ic"><span>♪</span><span>❙❙</span></div>
+            </div>
+
+            <div class="hud">
+              <div class="ring">
+                <svg width="132" height="132" viewBox="0 0 132 132">
+                  <circle cx="66" cy="66" r="58" fill="none" stroke="#F3EADC" stroke-width="4"/>
+                  <circle cx="66" cy="66" r="58" fill="none" stroke="#E85D2A" stroke-width="4"
+                          stroke-linecap="round" stroke-dasharray="364.4" stroke-dashoffset="120"
+                          transform="rotate(-90 66 66)"/>
+                </svg>
+                <div class="target">12</div>
+              </div>
+              <div class="under-hud"><span>剩余 32″</span><span class="err">✕ 2</span></div>
+            </div>
+
+            <div class="bars">
+              <div class="bar on"></div><div class="bar on"></div><div class="bar on"></div>
+              <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+              <div class="bar"></div><div class="bar"></div>
+            </div>
+
+            <div class="grid">
+              <div class="cell done">1</div><div class="cell done">7</div><div class="cell">16</div>
+              <div class="cell done">23</div><div class="cell">25</div>
+              <div class="cell done">5</div><div class="cell">19</div><div class="cell done">4</div>
+              <div class="cell done">8</div><div class="cell">17</div>
+              <div class="cell target">12</div><div class="cell done">2</div><div class="cell done">9</div>
+              <div class="cell err">20</div><div class="cell done">6</div>
+              <div class="cell">14</div><div class="cell done">3</div><div class="cell">21</div>
+              <div class="cell done">10</div><div class="cell">18</div>
+              <div class="cell">22</div><div class="cell done">11</div><div class="cell">15</div>
+              <div class="cell">24</div><div class="cell">13</div>
+            </div>
+          </div>
+        </div>
+        <div class="caption">5×5 · 已完成格子的 ♪ 痕迹</div>
+      </div>
+
+      <div class="notes">
+        <ul>
+          <li><b>环形计时包住目标数字</b>：环形是"节拍器"的形状语言，也省下一整行高度。</li>
+          <li><b>"已完成 23/64"改为小节进度</b>：把 N² 切成 8 个乐句，点亮 = 弹过这一小节，比数字更符合音乐叙事。</li>
+          <li><b>失误收成小徽章</b>：右上角 ✕2，超时前 15% 转砖红。</li>
+          <li><b>底部长文案只出现一次</b>：第 1 关气泡提示 5 秒后淡出，之后不再常驻。</li>
+          <li><b>格子单色化</b>：只有数字和纸。点对不换底色，只留一枚 ♪ 痕迹——8×8 打完整张卡，纸面像一页被标记过的乐谱。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section>
+    <div class="sec-num">03 — 音乐系统</div>
+    <h2>格子即琴键</h2>
+    <p class="sub">数字 k 对应乐谱第 k 个音。按 1 → N² 点击，就是把这首曲子从头弹到尾。</p>
+
+    <div class="map">
+      <div class="map-row">
+        <div class="map-label">点击顺序</div>
+        <div class="keys">
+          <div class="key">1<small>C4</small></div><span class="arrow">→</span>
+          <div class="key">2<small>C4</small></div><span class="arrow">→</span>
+          <div class="key">3<small>G4</small></div><span class="arrow">→</span>
+          <div class="key">4<small>G4</small></div><span class="arrow">→</span>
+          <div class="key">5<small>A4</small></div><span class="arrow">→</span>
+          <div class="key">6<small>A4</small></div><span class="arrow">→</span>
+          <div class="key">7<small>G4</small></div><span class="arrow">→</span>
+          <div class="key">8<small>F4</small></div><span class="arrow">→</span>
+          <div class="key">9<small>F4</small></div>
+        </div>
+      </div>
+      <div class="map-row">
+        <div class="map-label">倒序关（9→1）</div>
+        <div class="keys">
+          <div class="key hit">9<small>C4</small></div><span class="arrow">→</span>
+          <div class="key hit">8<small>C4</small></div><span class="arrow">→</span>
+          <div class="key hit">7<small>G4</small></div><span class="arrow">→</span>
+          <div class="key hit">6<small>G4</small></div><span class="arrow">→</span>
+          <div class="key hit">5<small>A4</small></div><span class="arrow">→</span>
+          <div class="key hit">4<small>A4</small></div><span class="arrow">→</span>
+          <div class="key hit">3<small>G4</small></div><span class="arrow">→</span>
+          <div class="key hit">2<small>F4</small></div><span class="arrow">→</span>
+          <div class="key hit">1<small>F4</small></div>
+        </div>
+      </div>
+      <div class="map-row">
+        <div class="map-label">双色关（奇偶）</div>
+        <div class="keys">
+          <div class="key hit">1<small>旋律</small></div><span class="arrow">→</span>
+          <div class="key" style="background:#EAF0F7;border-color:#CBD9E8;color:#3A6EA5">2<small>低音</small></div><span class="arrow">→</span>
+          <div class="key hit">3<small>旋律</small></div><span class="arrow">→</span>
+          <div class="key" style="background:#EAF0F7;border-color:#CBD9E8;color:#3A6EA5">4<small>低音</small></div><span class="arrow">→</span>
+          <div class="key hit">5<small>旋律</small></div><span class="arrow">→</span>
+          <div class="key" style="background:#EAF0F7;border-color:#CBD9E8;color:#3A6EA5">6<small>低音</small></div><span class="arrow">→</span>
+          <div class="key hit">7<small>旋律</small></div><span class="arrow">→</span>
+          <div class="key" style="background:#EAF0F7;border-color:#CBD9E8;color:#3A6EA5">8<small>低音</small></div><span class="arrow">→</span>
+          <div class="key hit">9<small>旋律</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p>倒序关用 <b>step = total − value + 1</b> 映射。玩家从 9 点回 1，听到的仍是 C C G G A A G——正着走的旋律。</p>
+      <span>如果倒序关真的倒放音乐，玩家会听到一串无意义的音符。玩法变体与音乐顺序必须解耦。</span>
+    </div>
+
+    <h3>曲库：组曲渐进，越大的关卡曲子越完整</h3>
+    <p>每档 12 关 = 2 首完整曲。前 6 关逐段展开曲 A，后 6 关是曲 B 的变奏。数字越多，听得越全——收集感是天然长出来的，不用额外设计。</p>
+    <table>
+      <thead><tr><th>关内序号</th><th>尺寸</th><th>音符数</th><th>曲目</th><th>段落</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td class="num">3×3</td><td class="num">9</td><td>曲 A</td><td>主题动机（必须是能认出来的前 9 音）</td></tr>
+        <tr><td class="num">2</td><td class="num">4×4</td><td class="num">16</td><td>曲 A</td><td>主题 + 应答</td></tr>
+        <tr><td class="num">3</td><td class="num">5×5</td><td class="num">25</td><td>曲 A</td><td>呈示部</td></tr>
+        <tr><td class="num">4</td><td class="num">6×6</td><td class="num">36</td><td>曲 A</td><td>发展部</td></tr>
+        <tr><td class="num">5</td><td class="num">7×7</td><td class="num">49</td><td>曲 A</td><td>再现部</td></tr>
+        <tr class="acc"><td class="num">6</td><td class="num">8×8</td><td class="num">64</td><td><b>曲 A</b></td><td><b>全曲 · 第一次听到完整的一首</b></td></tr>
+        <tr><td class="num">7–12</td><td class="num">3×3→8×8</td><td class="num">9→64</td><td>曲 B</td><td>变奏（倒序 = 逆行 / 双色 = 二声部）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>收藏：唱片墙</h3>
+    <p>3 档 × 2 首 = 6 张唱片，每张 6 段进度。通关点亮一段，六段全满星变<b>金唱片</b>；六张金唱片解锁第七张隐藏"安可曲"。点唱片可回放整曲——这是"我收集的东西真的属于我"的证明。</p>
+    <div class="grid3">
+      <div class="card"><div class="k">Level 1</div><h4>片段</h4><p>通关即点亮该段，可试听这一段。</p></div>
+      <div class="card"><div class="k">Level 2</div><h4>完整</h4><p>六段全部通关，唱片可整曲回放，标签变墨色。</p></div>
+      <div class="card"><div class="k">Level 3</div><h4>金唱片</h4><p>六段全部满星。唱片变金，旋转光环，解锁成就。</p></div>
+    </div>
+
+    <div class="callout">
+      <p>音频方案：<b>WebAudio 实时合成优先</b>（零包体、&lt;30ms 延迟），低版本小程序降级为预生成采样。</p>
+      <span>三角波 + 2/3/4 次谐波 + ADSR + 10ms 击弦噪声 + 反馈延迟混响。四种音色（八音盒 / 三角钢琴 / 电钢 / 古筝）只改波形与包络。</span>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section>
+    <div class="sec-num">04 — 结构</div>
+    <h2>从"一个按钮"到"今天的三件事"</h2>
+    <p class="sub">现在首页只有一个「开始挑战」，排行榜是空壳页，星星只增不减——缺的不是功能，是"明天为什么还要来"。</p>
+    <div class="tabs">
+      <div class="tab">
+        <div class="n">TAB 01</div><h4>演奏</h4>
+        <ul>
+          <li class="hi">今日一曲</li><li class="hi">继续闯关</li>
+          <li>当前唱片进度</li><li>连续演奏天数</li>
+        </ul>
+      </div>
+      <div class="tab">
+        <div class="n">TAB 02</div><h4>关卡</h4>
+        <ul>
+          <li>三档切换</li><li class="hi">12 关卡卡片</li>
+          <li>曲名段 + 唱片角标</li><li>锁定态</li>
+        </ul>
+      </div>
+      <div class="tab">
+        <div class="n">TAB 03</div><h4>曲集（新）</h4>
+        <ul>
+          <li class="hi">唱片墙 6+1</li><li class="hi">整曲回放</li>
+          <li>金唱片</li><li>音色兑换</li>
+        </ul>
+      </div>
+      <div class="tab">
+        <div class="n">TAB 04</div><h4>我的</h4>
+        <ul>
+          <li>统计</li><li class="hi">成就徽章墙</li>
+          <li>最近成绩</li><li>设置 / 清空</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>留存循环</h3>
+    <div class="grid2" style="margin-top:14px;">
+      <div class="card"><div class="k">30 秒</div><h4>听旋律 → 拿星 → 看到下一段</h4><p>每次点击都有音高，即时反馈。</p></div>
+      <div class="card"><div class="k">5 分钟</div><h4>6 关 = 一首完整曲子</h4><p>"再打一关就能听完整首"是最强的连续动机。</p></div>
+      <div class="card"><div class="k">1 天</div><h4>每日一曲 + 连续天数</h4><p>固定种子、全服同曲，稀缺性 + 损失厌恶。</p></div>
+      <div class="card"><div class="k">30 天</div><h4>全部金唱片 + 隐藏曲 + 音色</h4><p>星星终于有了消耗出口，长期玩家有身份认同。</p></div>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section>
+    <div class="sec-num">05 — 路线</div>
+    <h2>四步走，每步都可独立上线</h2>
+    <div class="road">
+      <div class="step"><div class="p">P0</div><h4>视觉与反馈</h4><p>新色板、格子单色化、HUD 重构、音符轨迹、结算唱片、撤掉排行榜入口</p><div class="d">约 1.5 周</div></div>
+      <div class="step"><div class="p">P1</div><h4>音乐系统</h4><p>曲库、音符映射、音频引擎、曲集页、收藏进度</p><div class="d">约 2.5 周</div></div>
+      <div class="step"><div class="p">P2</div><h4>留存</h4><p>每日一曲、新手引导、成就、分享卡片、音色商店</p><div class="d">约 2 周</div></div>
+      <div class="step"><div class="p">P3</div><h4>社交</h4><p>云端排行榜、好友挑战、成绩校验</p><div class="d">待定</div></div>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section>
+    <div class="sec-num">06 — 待确认</div>
+    <h2>四个需要你拍板的决策</h2>
+    <table>
+      <thead><tr><th style="width:34%">决策</th><th>选项</th></tr></thead>
+      <tbody>
+        <tr><td><b>格子是否彻底单色化</b></td><td>单色（更高级、更专业）｜ 保留彩色开关给亲子模式</td></tr>
+        <tr><td><b>曲库版权路线</b></td><td>全部原创生成（零风险）｜ 3 首公版名曲 + 3 首原创（记忆点强，需确认改编合规）</td></tr>
+        <tr><td><b>是否加第 4 个 Tab</b></td><td>加（收集可见性最高，需 8 个 tabBar 图标）｜ 并入「我的」（省资源，收集感弱）</td></tr>
+        <tr><td><b>音乐是否参与评价</b></td><td>只影响演奏评级（推荐）｜ 参与星级（需重算 144 星体系）</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    完整方案（含数据模型、音频参数、文件级改动清单、风险与验收标准）见 <b>docs/design-v2.md</b> · 本页仅为视觉提案，未改动任何代码
+  </footer>
+
+</div>
+</body>
+</html>

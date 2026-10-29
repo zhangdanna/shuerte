@@ -1,0 +1,116 @@
+@use '@/styles/variables.scss' as *;
+
+// 黑胶盘面：同心沟槽。注意——同心纹是旋转对称的，只靠它转起来看不出任何变化，
+// 真正提供「在转」的视觉线索是上面那道反光带（.sheen）与偏心音符（.note）。
+$disc-ink: #2b2b2f;
+$disc-groove: #35353a;
+
+.disc {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: $radius-round;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-radial-gradient(
+    circle at center,
+    $disc-ink 0,
+    $disc-ink 3rpx,
+    $disc-groove 4rpx,
+    $disc-ink 5rpx
+  );
+  box-shadow: inset 0 0 0 2rpx rgba(255, 253, 248, 0.07);
+}
+
+.gold {
+  background: repeating-radial-gradient(
+    circle at center,
+    #c08c22 0,
+    #c08c22 3rpx,
+    #d9a53c 4rpx,
+    #c08c22 5rpx
+  );
+}
+
+// 反光：两道对角柔光扫过盘面（真唱片就是这样两道弧形反光），
+// 同心沟槽旋转是对称的，全靠这两道高光才看得出「在转」
+.sheen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: $radius-round;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0) 0deg,
+    rgba(255, 255, 255, 0.1) 28deg,
+    rgba(255, 255, 255, 0.21) 44deg,
+    rgba(255, 255, 255, 0.1) 62deg,
+    rgba(255, 255, 255, 0) 96deg,
+    rgba(255, 255, 255, 0) 180deg,
+    rgba(255, 255, 255, 0.08) 208deg,
+    rgba(255, 255, 255, 0.16) 224deg,
+    rgba(255, 255, 255, 0.08) 242deg,
+    rgba(255, 255, 255, 0) 276deg,
+    rgba(255, 255, 255, 0) 360deg
+  );
+  pointer-events: none;
+}
+
+// 中心标签：尺寸按盘面百分比自适应，随盘一起转
+.label {
+  position: relative;
+  width: 42%;
+  height: 42%;
+  flex: 0 0 auto;
+  border-radius: $radius-round;
+  background-color: $sunset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gold .label {
+  background-color: $paper-1;
+}
+
+// 标签上的音符：随盘自转，字形方位一变就说明盘在转（反光带之外的第二条线索）
+.note {
+  font-size: 22rpx;
+  line-height: 1;
+  color: rgba(255, 253, 248, 0.92);
+}
+
+.gold .note {
+  color: $gold;
+}
+
+// 不随盘旋转的中心层：对局页的目标数字要始终正立
+.center {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinning {
+  animation: discSpin linear infinite;
+}
+
+@keyframes discSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

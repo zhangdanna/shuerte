@@ -1,132 +1,410 @@
 @use '@/styles/variables.scss' as *;
 
 .home {
+  box-sizing: border-box;
   min-height: 100vh;
-  background: linear-gradient(180deg, #FFF5F0 0%, #FFFFFF 40%);
-  padding: $page-padding;
+  background-color: $paper-0;
+  @include paper-grain;
+  // 底部留出 tabBar 的高度，否则最后一段会被遮住
+  padding: 72rpx $page-padding 160rpx;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-evenly;
 }
 
-/* 标题区域 */
-.titleSection {
-  text-align: center;
-  animation: bounceIn 0.8s ease-out;
+/* ============ 首屏：谱纸与宣传语 ============ */
+.hero {
+  animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.heroTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.heroText {
+  flex: 1;
+  min-width: 0;
+  padding-right: $spacing-md;
 }
 
 .title {
-  font-size: 56rpx;
+  display: block;
+  font-family: $font-serif;
+  font-size: 64rpx;
   font-weight: $font-weight-bold;
-  color: #FF6B35;
-  display: block;
-  margin-bottom: 16rpx;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: $ink-900;
 }
 
-.subtitle {
-  font-size: $font-size-md;
-  color: #8B7355;
+.tagline {
   display: block;
+  margin-top: 14rpx;
+  font-size: 26rpx;
+  letter-spacing: 0.06em;
+  color: $ink-400;
 }
 
-/* 开始挑战按钮 */
+/* 朱砂印：落款感，慢慢呼吸 */
+.seal {
+  width: 88rpx;
+  height: 88rpx;
+  flex: 0 0 auto;
+  margin-top: 6rpx;
+  @include seal-chip;
+  border-width: 4rpx;
+  border-radius: $radius-sm;
+  transform: rotate(-6deg);
+  animation: sealBreath 4s ease-in-out infinite;
+}
+
+.sealText {
+  font-size: 40rpx;
+  font-weight: $font-weight-semibold;
+  line-height: 1;
+  color: $seal;
+}
+
+/* 五线谱：音符依次亮起，像有人在谱纸上落笔 */
+.staff {
+  position: relative;
+  height: 132rpx;
+  margin-top: $spacing-lg;
+  overflow: hidden;
+}
+
+.staffLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2rpx;
+  background-color: $line;
+  opacity: 0.7;
+}
+
+.staffLine:nth-child(1) {
+  top: 22%;
+}
+
+.staffLine:nth-child(2) {
+  top: 36%;
+}
+
+.staffLine:nth-child(3) {
+  top: 50%;
+}
+
+.staffLine:nth-child(4) {
+  top: 64%;
+}
+
+.staffLine:nth-child(5) {
+  top: 78%;
+}
+
+.staffNote {
+  position: absolute;
+  font-size: 34rpx;
+  line-height: 1;
+  color: $sunset;
+  opacity: 0.24;
+  animation: noteFloat 3.4s ease-in-out infinite;
+}
+
+/* 当前曲目：一张装裱过的曲签 */
+.scroll {
+  margin-top: $spacing-lg;
+  padding: 24rpx 28rpx;
+  @include scroll-frame;
+  border-radius: $radius-lg;
+  animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+
+  &:active {
+    background-color: $paper-2;
+  }
+}
+
+.scrollHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.scrollLabel {
+  font-size: $font-size-xs;
+  letter-spacing: 0.16em;
+  color: $ink-400;
+}
+
+.scrollTier {
+  font-size: $font-size-xs;
+  color: $ink-400;
+  font-variant-numeric: tabular-nums;
+}
+
+.songRow {
+  margin-top: $spacing-sm;
+  display: flex;
+  align-items: center;
+}
+
+// 唱片尺寸交给这个槽位，Disc 自身用 100% 铺满
+.discSlot {
+  width: 112rpx;
+  height: 112rpx;
+  flex: 0 0 auto;
+}
+
+.songInfo {
+  flex: 1;
+  min-width: 0;
+  margin-left: $spacing-md;
+}
+
+.songTitle {
+  display: block;
+  font-family: $font-serif;
+  font-size: 34rpx;
+  font-weight: $font-weight-semibold;
+  color: $ink-900;
+}
+
+.songMeta {
+  display: block;
+  margin-top: 6rpx;
+  font-size: $font-size-xs;
+  color: $ink-400;
+}
+
+.arrow {
+  font-size: 36rpx;
+  color: $ink-200;
+}
+
+.segments {
+  margin-top: $spacing-md;
+  display: flex;
+  gap: 6rpx;
+}
+
+.segment {
+  flex: 1;
+  height: 6rpx;
+  border-radius: 3rpx;
+  background-color: $paper-2;
+  transition: background-color $transition-base;
+}
+
+.segmentOn {
+  background-color: $sunset;
+}
+
+/* ============ 三卷进度 ============ */
+.volumes {
+  margin-top: $spacing-lg;
+  padding: 22rpx 26rpx;
+  background-color: $paper-1;
+  border: 2rpx solid $line;
+  border-radius: $radius-lg;
+  animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.14s both;
+
+  &:active {
+    background-color: $paper-2;
+  }
+}
+
+.volumesHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.volumesTitle {
+  font-family: $font-serif;
+  font-size: 26rpx;
+  letter-spacing: 0.16em;
+  color: $ink-900;
+}
+
+.volumesHint {
+  font-size: 20rpx;
+  color: $ink-200;
+}
+
+.volumeRow {
+  margin-top: $spacing-md;
+  display: flex;
+  gap: $spacing-lg;
+}
+
+.volume {
+  flex: 1;
+  min-width: 0;
+}
+
+.volumeName {
+  display: block;
+  font-family: $font-serif;
+  font-size: 28rpx;
+  color: $ink-900;
+}
+
+.volumeBar {
+  margin-top: 10rpx;
+  height: 4rpx;
+  background-color: $paper-2;
+  border-radius: 2rpx;
+  overflow: hidden;
+}
+
+.volumeBarFill {
+  height: 100%;
+  background-color: $sunset;
+  border-radius: 2rpx;
+  transition: width $transition-slow;
+}
+
+.volumeMeta {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: $ink-400;
+  font-variant-numeric: tabular-nums;
+}
+
+.volumeLocked {
+  opacity: 0.55;
+
+  .volumeName {
+    color: $ink-400;
+  }
+}
+
+/* ============ 主按钮 ============ */
 .startSection {
+  margin-top: auto;
+  padding-top: $spacing-xl;
   display: flex;
   flex-direction: column;
   align-items: center;
+  animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both;
 }
 
 .startButton {
-  width: 400rpx;
-  height: 120rpx;
-  background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
-  border-radius: $radius-round;
+  width: 100%;
+  height: 112rpx;
+  background-color: $sunset;
+  border-radius: $radius-button;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(255, 107, 53, 0.3);
-  transition: transform $transition-base, box-shadow $transition-base;
+  transition: transform $transition-base, background-color $transition-base;
+  animation: buttonGlow 3.6s ease-in-out infinite;
 
   &:active {
-    transform: scale(0.95);
-    box-shadow: 0 4rpx 16rpx rgba(255, 107, 53, 0.4);
+    transform: scale(0.98);
+    background-color: $sunset-deep;
   }
 }
 
 .startButtonText {
   font-size: $font-size-xl;
-  font-weight: $font-weight-semibold;
-  color: #ffffff;
+  font-weight: $font-weight-medium;
+  letter-spacing: 0.08em;
+  color: $color-text-white;
 }
 
 .levelInfo {
-  margin-top: 24rpx;
+  margin-top: $spacing-md;
   font-size: $font-size-sm;
-  color: #8B7355;
+  color: $ink-400;
 }
 
-/* 装饰动画区域 */
-.decoSection {
+/* ============ 底部数据 ============ */
+.footer {
+  margin-top: $spacing-xl;
+  padding-top: $spacing-lg;
+  border-top: 2rpx solid $line;
+  display: flex;
+  align-items: center;
+}
+
+.footerItem {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.decoGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16rpx;
-  margin-bottom: 32rpx;
-}
-
-.decoCell {
-  width: 80rpx;
-  height: 80rpx;
-  background: linear-gradient(135deg, #FFF0EB 0%, #FFE8F0 100%);
-  border-radius: $radius-md;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: decoFloat 2s ease-in-out infinite;
-  box-shadow: 0 4rpx 12rpx rgba(255, 107, 53, 0.1);
-}
-
-.decoNumber {
-  font-size: $font-size-lg;
+.footerValue {
+  font-size: 38rpx;
   font-weight: $font-weight-semibold;
-  color: #FF6B35;
+  color: $ink-900;
+  font-variant-numeric: tabular-nums;
 }
 
-.decoTip {
-  font-size: $font-size-sm;
-  color: #8B7355;
-  text-align: center;
+.footerUnit {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-normal;
+  color: $ink-200;
 }
 
-@keyframes decoFloat {
-  0%, 100% {
+.footerLabel {
+  margin-top: 6rpx;
+  font-size: $font-size-xs;
+  color: $ink-400;
+}
+
+.footerDivider {
+  width: 2rpx;
+  height: 40rpx;
+  background-color: $line;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16rpx);
+  }
+
+  to {
+    opacity: 1;
     transform: translateY(0);
   }
-  50% {
-    transform: translateY(-8rpx);
+}
+
+@keyframes noteFloat {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: translateY(2rpx);
+  }
+
+  40% {
+    opacity: 0.95;
+    transform: translateY(-6rpx);
   }
 }
 
-/* 弹跳动画 */
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-  70% {
-    transform: scale(0.9);
-  }
+@keyframes sealBreath {
+  0%,
   100% {
-    transform: scale(1);
+    transform: rotate(-6deg) scale(1);
+  }
+
+  50% {
+    transform: rotate(-4deg) scale(1.04);
+  }
+}
+
+@keyframes buttonGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 93, 42, 0);
+  }
+
+  50% {
+    box-shadow: 0 10rpx 28rpx rgba(232, 93, 42, 0.22);
   }
 }

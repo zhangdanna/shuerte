@@ -1,84 +1,177 @@
 @use '@/styles/variables.scss' as *;
 
 .page {
+  box-sizing: border-box;
   min-height: 100vh;
-  padding: $spacing-lg $page-padding $spacing-xl;
+  padding: $spacing-xl $page-padding $spacing-lg;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(180deg, $color-primary-soft 0%, $color-bg-page 420rpx);
+  background-color: $paper-0;
 }
 
-.card {
-  width: 686rpx;
-  padding: $spacing-xl $spacing-lg;
+// ============ 唱片 ============
+.discWrap {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: $color-bg-card;
-  border-radius: $radius-xl;
-  box-shadow: $shadow-card;
+  animation: discIn 0.48s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.chapter {
-  font-size: $font-size-xs;
-  color: $color-primary-dark;
-  background-color: $color-primary-soft;
-  padding: 4rpx $spacing-sm;
+.disc {
+  position: relative;
+  width: 300rpx;
+  height: 300rpx;
   border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-radial-gradient(circle at center, #2b2b2f 0, #2b2b2f 3rpx, #35353a 4rpx, #2b2b2f 5rpx);
+  animation: spin 16s linear infinite;
 }
 
-.title {
-  margin-top: $spacing-sm;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
+.discWrapFail .disc {
+  animation: none;
+  opacity: 0.55;
+}
+
+.discGroove {
+  position: absolute;
+  top: 22rpx;
+  left: 22rpx;
+  right: 22rpx;
+  bottom: 22rpx;
+  border-radius: $radius-round;
+  border: 2rpx solid rgba(255, 253, 248, 0.06);
+}
+
+.discLabel {
+  width: 116rpx;
+  height: 116rpx;
+  border-radius: $radius-round;
+  background-color: $sunset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx;
+}
+
+.discTitle {
+  font-family: $font-serif;
+  font-size: $font-size-xs;
+  line-height: 1.15;
+  color: #fffdf8;
+  text-align: center;
 }
 
 .starRow {
-  margin-top: $spacing-lg;
+  margin-top: -28rpx;
+  padding: 8rpx 24rpx;
+  background-color: $paper-0;
+  border-radius: $radius-round;
+}
+
+.chapter {
+  margin-top: $spacing-md;
+  font-size: $font-size-sm;
+  color: $ink-400;
+}
+
+// ============ 评级 ============
+.gradeRow {
+  margin-top: $spacing-md;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  width: 686rpx;
+  padding: 20rpx 24rpx;
+  background-color: $paper-1;
+  border: 2rpx solid $line;
+  border-radius: $radius-lg;
+}
+
+.gradeBadge {
+  width: 76rpx;
+  height: 76rpx;
+  flex: 0 0 auto;
+  border-radius: $radius-round;
+  border: 2rpx solid $gold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gradeLetter {
+  font-family: $font-serif;
+  font-size: 40rpx;
+  font-weight: $font-weight-bold;
+  color: $gold;
+  line-height: 1;
+}
+
+.gradeMeta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.gradeLabel {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $ink-900;
+}
+
+.gradeHint {
+  margin-top: 2rpx;
+  font-size: $font-size-xs;
+  color: $ink-400;
 }
 
 .recordTag {
-  margin-top: $spacing-md;
-  padding: 6rpx $spacing-md;
+  flex: 0 0 auto;
+  padding: 4rpx 14rpx;
   background-color: $color-record-bg;
   border-radius: $radius-round;
 }
 
 .recordTagText {
   font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
   color: $color-record-text;
-  white-space: nowrap;
 }
 
-// 失败态：不用星级，用一个明确的失败标记
+// ============ 失败 ============
 .failBlock {
-  margin-top: $spacing-lg;
+  margin-top: $spacing-md;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .failTitle {
+  font-family: $font-serif;
   font-size: $font-size-xl;
   font-weight: $font-weight-semibold;
-  color: $color-error;
+  color: $ink-900;
 }
 
 .failDesc {
   margin-top: $spacing-xs;
   font-size: $font-size-sm;
-  color: $color-text-tertiary;
-  text-align: center;
+  color: $ink-400;
 }
 
+// ============ 数值 ============
 .metrics {
-  width: 100%;
-  margin-top: $spacing-xl;
+  width: 686rpx;
+  margin-top: $spacing-md;
+  padding: $spacing-md 0;
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  background-color: $paper-1;
+  border: 2rpx solid $line;
+  border-radius: $radius-lg;
 }
 
 .metric {
@@ -88,29 +181,91 @@
   align-items: center;
 }
 
+.metricDivider {
+  width: 2rpx;
+  height: 48rpx;
+  background-color: $line;
+}
+
 .metricLabel {
   font-size: $font-size-xs;
-  color: $color-text-tertiary;
+  color: $ink-400;
 }
 
 .metricValue {
-  margin-top: $spacing-xs;
-  font-size: $font-size-xl;
+  margin-top: 6rpx;
+  font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
-  color: $color-text-primary;
+  color: $ink-900;
   font-variant-numeric: tabular-nums;
 }
 
-.hint {
-  margin-top: $spacing-lg;
+// ============ 收集进度 ============
+.collect {
+  width: 686rpx;
+  margin-top: $spacing-md;
+  padding: 20rpx 24rpx;
+  background-color: $paper-1;
+  border: 2rpx solid $line;
+  border-radius: $radius-lg;
+}
+
+.collectHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.collectTitle {
+  font-family: $font-serif;
+  font-size: $font-size-md;
+  color: $ink-900;
+}
+
+.collectCount {
   font-size: $font-size-xs;
-  color: $color-text-tertiary;
+  color: $ink-400;
+}
+
+.collectSegments {
+  margin-top: $spacing-sm;
+  display: flex;
+  gap: 8rpx;
+}
+
+.collectSegment {
+  flex: 1;
+  height: 10rpx;
+  border-radius: 5rpx;
+  background-color: $paper-2;
+}
+
+.collectSegmentOn {
+  background-color: $sunset;
+}
+
+.collectSegmentCurrent {
+  outline: 2rpx solid $sunset-deep;
+  outline-offset: 2rpx;
+}
+
+.collectHint {
+  margin-top: $spacing-sm;
+  font-size: $font-size-xs;
+  color: $ink-400;
+}
+
+.hint {
+  margin-top: $spacing-sm;
+  font-size: $font-size-xs;
+  color: $ink-400;
   text-align: center;
 }
 
+// ============ 操作 ============
 .actions {
   width: 686rpx;
-  margin-top: $spacing-xl;
+  margin-top: $spacing-lg;
 }
 
 .primaryBtn {
@@ -119,12 +274,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  background-color: $sunset;
   border-radius: $radius-button;
   transition: all $transition-base;
 
   &:active {
-    opacity: 0.9;
+    background-color: $sunset-deep;
     transform: scale(0.98);
   }
 }
@@ -143,21 +298,34 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: $color-bg-card;
-  border: 2rpx solid $color-border;
+  background-color: $paper-1;
+  border: 2rpx solid $line;
   border-radius: $radius-button;
 
   &:active {
-    opacity: 0.9;
+    background-color: $paper-2;
   }
 }
 
 .ghostBtnText {
   font-size: $font-size-md;
-  color: $color-text-secondary;
+  color: $ink-600;
   white-space: nowrap;
 }
 
+.textBtn {
+  margin-top: $spacing-md;
+  padding: $spacing-xs 0;
+  display: flex;
+  justify-content: center;
+}
+
+.textBtnText {
+  font-size: $font-size-sm;
+  color: $ink-400;
+}
+
+// ============ 异常兜底 ============
 .emptyPage {
   min-height: 100vh;
   padding: 0 $page-padding;
@@ -168,17 +336,37 @@
 }
 
 .emptyTitle {
+  font-family: $font-serif;
   font-size: $font-size-xl;
   font-weight: $font-weight-semibold;
-  color: $color-text-primary;
+  color: $ink-900;
 }
 
 .emptyDesc {
   margin-top: $spacing-sm;
+  margin-bottom: $spacing-lg;
   font-size: $font-size-sm;
-  color: $color-text-tertiary;
+  color: $ink-400;
 }
 
-.emptyPage .primaryBtn {
-  margin-top: $spacing-xl;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes discIn {
+  from {
+    opacity: 0;
+    transform: translateY(16rpx) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

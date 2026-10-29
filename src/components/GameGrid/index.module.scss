@@ -12,19 +12,22 @@
   font-size: 40rpx;
 }
 
-// 方形卡：常规圆角面板
+// 方形卡：格子直接落在纸面上，不再套一层卡片框（设计稿的「一页谱纸」）
 .cardSquare {
   width: 686rpx;
-  padding: 12rpx;
-  border-radius: $radius-xl;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-// ============ 圆形卡：整块圆盘，格子沿圆周分区 ============
+// ============ 圆形卡：整块圆盘，格子是带缝隙的圆角扇环 ============
 .cardCircle {
   width: 686rpx;
   height: 686rpx;
   padding: 0;
   border-radius: $radius-round;
+  // 盘面比格子深一档：格子的缝隙露出盘面，整盘才看得出分格
   background-color: $color-circle-bg;
   border-color: $color-circle-border;
   font-size: 30rpx;
@@ -64,43 +67,55 @@
   font-size: 22rpx;
 }
 
-// ============ 生肖卡：整张卡裁成生肖轮廓，格子划分在轮廓内部 ============
-.cardSilhouette {
+// ============ 图案卡：整张卡裁成不规则图案，格子划分在轮廓内部 ============
+.cardPattern {
   width: 686rpx;
   height: 686rpx;
   padding: 0;
   border: none;
   border-radius: 0;
   box-shadow: none;
-  // 无底色：格子紧贴铺满轮廓，轮廓由 clip-path 定义
+  // 背景透明：图案面、外轮廓、所有格线都由 .patternInk 那张 SVG 画。
+  // 格子（GridCell 的 ghost 态）也完全透明，所以「卡片」这个概念在这层已经没有了 ——
+  // 只有一整块图案、一组线，和直接放在线上的数字
   background-color: transparent;
-  // 兜底字号，实际由 silhouette3~silhouette8 覆盖
+  // 兜底字号，实际由 pattern3~pattern8 覆盖
   font-size: 40rpx;
 }
 
-// 生肖卡字号：格子是轮廓内划分出的多边形小格，比同尺寸的规整网格小，字号相应收敛
-// （按最紧的形状定的：8×8 时最小格约 19rpx）
-.silhouette3 {
+// 线条层：铺满整卡，只负责图案面 + 线，不接点击（pointer-events 交给格子的热区）
+.patternInk {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+// 图案卡字号：格子是轮廓内划分出的多边形小格，比同尺寸的规整网格小，字号相应收敛
+// （按最紧的形状定的：8×8 时最小格约 18rpx）
+.pattern3 {
   font-size: 44rpx;
 }
 
-.silhouette4 {
+.pattern4 {
   font-size: 38rpx;
 }
 
-.silhouette5 {
+.pattern5 {
   font-size: 34rpx;
 }
 
-.silhouette6 {
+.pattern6 {
   font-size: 28rpx;
 }
 
-.silhouette7 {
+.pattern7 {
   font-size: 24rpx;
 }
 
-.silhouette8 {
+.pattern8 {
   font-size: 20rpx;
 }
 
@@ -124,7 +139,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 0.14em; // 格间距随字号同步缩放
+  padding: 0.16em; // 格间距随字号同步缩放（5×5 时约 14rpx）
 }
 
 // 小格字号（相对卡片基准字号）

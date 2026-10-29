@@ -1,6 +1,6 @@
 /**
- * 生肖轮廓自检脚本（开发用）：
- * 用「椭圆并集」描述形状 → 采样成网格 → 追踪外轮廓 → 平滑简化 → 打印 ASCII 预览。
+ * 不规则图案自检脚本（开发用）：
+ * 用一条多边形描述图案 → 采样成网格 → 追踪外轮廓 → 平滑简化 → 打印 ASCII 预览。
  * 另外把运行时的「格位采样 + Voronoi 划分」逻辑搬过来跑一遍，验证每个尺寸都能划分出 size² 个格子。
  *
  * 运行：node scripts/preview-shapes.js [name...]
@@ -8,21 +8,26 @@
  *   DIVIDE=5 打印 5×5 的 Voronoi 划分图（字母相同 = 同一格）
  */
 
-const RES = 56; // 轮廓采样分辨率
+const RES = 72; // 轮廓采样分辨率（与运行时 TRACE_RESOLUTION 一致）
 const DIVIDE_RES = 96; // Voronoi 划分分辨率
 
 /** 形状与运行时共用同一份数据，避免两处不同步 */
-const SHAPES = require('../src/data/zodiacShapes.json').reduce((acc, shape) => {
+const SHAPES = require('../src/data/patternShapes.json').reduce((acc, shape) => {
   acc[shape.key] = shape;
   return acc;
 }, {});
 
-const inside = (shape, x, y) =>
-  shape.ellipses.some((e) => {
-    const dx = (x - e.cx) / e.rx;
-    const dy = (y - e.cy) / e.ry;
-    return dx * dx + dy * dy <= 1;
-  });
+/** 点在多边形内（射线法），与运行时 silhouette.ts 的 isInsideShape 同一套判定 */
+const inside = (shape, x, y) => {
+  const pts = shape.polygon;
+  let hit = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i, i += 1) {
+    const [xi, yi] = pts[i];
+    const [xj, yj] = pts[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) hit = !hit;
+  }
+  return hit;
+};
 
 const buildGrid = (shape, res) => {
   const grid = new Uint8Array(res * res);

@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useSaveStore } from '@/store/useSaveStore';
-import { setSoundEnabled } from '@/services/audio';
+import { setMusicEnabled, setSoundEnabled, setTimbre } from '@/services/audio';
 import { setHapticsEnabled } from '@/services/haptics';
 import { GameSettings } from '@/types/game';
 // 全局样式
@@ -10,10 +10,12 @@ function App(props) {
   useEffect(() => {
     const applySettings = (settings: GameSettings) => {
       setSoundEnabled(settings.sound);
+      setMusicEnabled(settings.music);
+      setTimbre(settings.timbre);
       setHapticsEnabled(settings.haptics);
     };
     applySettings(useSaveStore.getState().settings);
-    // 设置项变更后同步到音效与震动服务
+    // 设置项变更后同步到音效、演奏音与震动服务
     return useSaveStore.subscribe((state) => applySettings(state.settings));
   }, []);
 

@@ -1,45 +1,74 @@
 @use '@/styles/variables.scss' as *;
 
 .card {
+  position: relative;
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
+  padding: 20rpx 22rpx;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: $spacing-md;
-  background-color: $color-bg-card;
-  border: 2rpx solid $color-border;
+  justify-content: space-between;
+  background-color: $paper-1;
+  border: 2rpx solid $line;
   border-radius: $radius-lg;
-  transition: all $transition-fast;
+  transition: transform $transition-fast, border-color $transition-base;
 
   &:active {
-    transform: scale(0.97);
+    transform: scale(0.985);
   }
 }
 
 .head {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
 }
 
 .index {
-  font-size: $font-size-md;
+  font-family: $font-serif;
+  font-size: 28rpx;
   font-weight: $font-weight-semibold;
-  color: $color-text-primary;
+  color: $ink-900;
 }
 
 .size {
-  padding: $spacing-xs $spacing-sm;
-  font-size: $font-size-xs;
-  color: $color-primary-dark;
-  background-color: $color-primary-soft;
-  border-radius: $radius-round;
+  padding: 2rpx 10rpx;
+  font-size: 20rpx;
+  line-height: 1.4;
+  color: $ink-400;
+  border: 2rpx solid $line;
+  border-radius: $radius-xs;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
+.metaRow {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+// 曲名：关卡是曲子的段落，用衬线让它像乐谱上的标题
+.song {
+  font-family: $font-serif;
+  font-size: $font-size-sm;
+  color: $ink-400;
+  @include text-ellipsis;
+}
+
+.mode {
+  flex: 0 0 auto;
+  margin-left: 8rpx;
+  padding: 0 8rpx;
+  font-size: 18rpx;
+  line-height: 28rpx;
+  color: $sunset-deep;
+  background-color: $sunset-soft;
+  border-radius: $radius-xs;
+}
+
 .body {
-  margin-top: $spacing-sm;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -47,43 +76,48 @@
 
 .time {
   font-size: $font-size-xs;
-  color: $color-text-tertiary;
+  color: $ink-400;
   font-variant-numeric: tabular-nums;
 }
 
+/* 当前关：朱砂描边 + 一枚「在此」小印 */
+.current {
+  border-color: $seal;
+  background-color: #fffaf4;
+}
+
+.seal {
+  position: absolute;
+  top: -12rpx;
+  right: -8rpx;
+  padding: 2rpx 10rpx;
+  @include seal-chip;
+  background-color: $paper-1;
+  transform: rotate(6deg);
+}
+
+.sealText {
+  font-size: 18rpx;
+  line-height: 26rpx;
+  color: $seal;
+}
+
+/* 未解锁：纸色压暗，虚线框表示还没刻上去 */
 .locked {
-  background-color: $color-bg-page;
-  border-color: $color-divider;
-
-  .index {
-    color: $color-text-disabled;
-  }
-
-  .size {
-    color: $color-text-disabled;
-    background-color: $color-bg-hover;
-  }
+  background-color: $paper-0;
+  border-style: dashed;
+  opacity: 0.7;
 
   &:active {
     transform: none;
   }
 }
 
-.current {
-  background-color: $color-primary-soft;
-  border-color: $color-primary;
-
-  .index {
-    color: $color-primary-dark;
-  }
-
-  .size {
-    background-color: $color-bg-card;
-  }
+.locked .index {
+  color: $ink-400;
 }
 
 .lockHint {
-  margin-top: $spacing-sm;
   font-size: $font-size-xs;
-  color: $color-text-disabled;
+  color: $ink-200;
 }

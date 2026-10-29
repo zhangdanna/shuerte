@@ -12,9 +12,9 @@ export type GamePhase = 'countdown' | 'playing' | 'paused' | 'finished' | 'faile
 
 /**
  * 整张卡片的造型（面板级，不是单个数字小格）。
- * 方形 → 圆形 → 生肖，随轮次递进；与小格数字数量（尺寸）自由组合。
+ * 方形 → 圆形 → 不规则图案，随轮次递进；与小格数字数量（尺寸）自由组合。
  */
-export type CardStyle = 'square' | 'circle' | 'zodiac';
+export type CardStyle = 'square' | 'circle' | 'pattern';
 
 /**
  * 玩法：档内前 6 关正序，后 6 关换变体玩法（尺寸仍是 3×3 → 8×8，所以不算重复关卡）
@@ -28,16 +28,55 @@ export type GameMode = 'forward' | 'reverse' | 'alternate';
 export interface LevelThresholds {
   gold: number;
   silver: number;
-  /** 极速档阈值：达标之上再压一档，只有它 + 零失误才拿得到满星（仅困难档有，其余档为 null） */
+  /** 极速档阈值：达标之上再压一档，只有它 + 零失误才拿得到满星（仅长调卷有，其余卷为 null） */
   platinum: number | null;
+}
+
+/** 音色：只改音色，不改玩法、不影响成绩 */
+export type TimbreKey = 'musicbox' | 'piano' | 'epiano';
+
+/** 演奏评级：只反映节奏贴合度，不影响星级 */
+export type PerformanceGrade = 'S' | 'A' | 'B' | 'C';
+
+/**
+ * 曲目：一首曲子 64 个音，每个音一拍。
+ * N×N 关卡取前 N² 个音 —— 所以关卡越大，曲子越完整。
+ */
+export interface SongConfig {
+  id: string;
+  title: string;
+  /** 所属难度档（1 小令 / 2 中调 / 3 长调） */
+  tier: number;
+  /** 参考速度：决定目标音符间隔，也决定回放速度 */
+  bpm: number;
+  /** 调性，仅用于展示与生成溯源 */
+  key: string;
+  style: TimbreKey;
+  /** 旋律轨（midi 音高），长度 64 */
+  melody: number[];
+  /** 低音轨（midi 音高），长度 64；双色交替关的偶数格取这里 */
+  bass: number[];
+  /** 每小节和弦（16 小节），供伴奏铺底与回放使用 */
+  chords: number[][];
+  credit: string;
+}
+
+/** 一局演奏的节奏表现 */
+export interface Performance {
+  perfect: number;
+  good: number;
+  free: number;
+  grade: PerformanceGrade;
 }
 
 /** 关卡配置 */
 export interface LevelConfig {
   id: string;
-  /** 所属轮次（= 章节 id） */
+  /** 所属轮次（= 章节 id）；0 表示不属于任何一轮（指引关） */
   chapterId: number;
   chapterTitle: string;
+  /** 指引关：无评星、不写档、不计时失败，通关只解锁第一关 */
+  tutorial?: boolean;
   /** 章内序号，从 1 开始 */
   index: number;
   /** 全局关卡号，从 1 开始，用于展示「第 N 关」 */
@@ -48,11 +87,13 @@ export interface LevelConfig {
   total: number;
   /** 卡片造型 */
   cardStyle: CardStyle;
-  /** 生肖造型时，卡片主题生肖在 ZODIAC_SHAPES 中的下标 */
-  zodiacIndex: number | null;
+  /** 图案造型时，卡片图案在 PATTERN_SHAPES 中的下标 */
+  patternIndex: number | null;
   /** 本关玩法 */
   mode: GameMode;
-  /** 本关满星数：初级 3 / 高级 4 / 困难 5 */
+  /** 绑定的曲目 id：数字 k 对应这首曲子的第 k 个音 */
+  songId: string;
+  /** 本关满星数：小令 3 / 中调 4 / 长调 5 */
   maxStars: number;
   thresholds: LevelThresholds;
   /** 限时（毫秒）：倒计时归零仍未完成即挑战失败 */
@@ -111,10 +152,30 @@ export interface GameResult {
   stars: number;
   isBest: boolean;
   playedAt: string;
+  /** 演奏评级，缺省表示未记录（旧存档） */
+  grade?: PerformanceGrade;
+}
+
+/**
+ * 一关「最好那一次」的完整记录。
+ * 星级/用时/失误用于判断要不要覆盖，beats 是那一次真实的击键节奏 —— 曲集回放靠它还原玩家的演奏。
+ */
+export interface BestRun {
+  stars: number;
+  elapsed: number;
+  errors: number;
+  /** 击键时间戳（ms，相对开局，按点击顺序），长度 = 该关数字个数 */
+  beats: number[];
 }
 
 /** 用户设置 */
 export interface GameSettings {
+  /** 提示音（倒计时/点错/通关） */
   sound: boolean;
+  /** 演奏音（点对时弹出的音符） */
+  music: boolean;
   haptics: boolean;
+  /** 亲子模式：格子按 6 色循环上色（默认关闭，保持纸面单色） */
+  colorful: boolean;
+  timbre: TimbreKey;
 }

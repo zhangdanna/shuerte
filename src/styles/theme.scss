@@ -1,106 +1,144 @@
 // ============================================
-// 主题配色变量 —— 眼力大作战（专注力训练）
+// 主题配色变量 —— 眼力大作战 v2「乐谱纸 · 墨水与暖光」
 // ============================================
+// 三条约束：
+//   1. 一屏内只允许一个强调色（sunset）出现，面积 < 8%
+//   2. 禁止渐变装饰（主按钮一处除外），纸感靠描边与留白
+//   3. 任何装饰元素不得落在数字格内部——格子只有数字和纸
 
-// 品牌主题色：日落橙，代表活力与快乐
-$color-primary: #FF6B35;
-$color-primary-light: #FF8C5A;
-$color-primary-dark: #E55A2B;
-$color-primary-soft: #FFF0EB;
+// ---------- 纸 ----------
+$paper-0: #fbf6ee; // 页面底
+$paper-1: #fffdf8; // 卡片 / 格子面
+$paper-2: #f3eadc; // 凹槽、进度底、未点亮槽位
+$line: #e7dbc8; // 描边、分隔线
 
-// 辅助色：珊瑚粉（进度、星星、强调）
-$color-accent: #FF4D8D;
-$color-accent-soft: #FFE8F0;
+// ---------- 墨 ----------
+$ink-900: #1a1815; // 标题、当前目标数字
+$ink-800: #2f2a24; // 格子数字：比标题浅一档，近白纸面上不刺眼
+$ink-600: #55504a; // 正文
+$ink-400: #8c8478; // 辅助信息
+$ink-200: #c6bdae; // 禁用、锁定
 
-// 功能色
-$color-success: #FF6B35;
-$color-warning: #FF8C5A;
-$color-error: #f5483b;
-$color-info: #2f6bff;
+// ---------- 强调 ----------
+$sunset: #e85d2a; // 主按钮、点对光晕、当前进度
+$sunset-deep: #c4461b; // 按下态
+$sunset-soft: #fdede5; // 浅底强调
+$gold: #dfa22e; // 星级、金唱片
+$brick: #be4438; // 点错（唯一负面色）
+$indigo: #3a6ea5; // 双色交替关的"蓝"位
 
-// 背景色
-$color-bg-page: #FFF8F0;
-$color-bg-card: #ffffff;
-$color-bg-hover: #FFF0EB;
+// ---------- 古风补充：桌 / 纸纹 / 朱砂 / 淡墨 ----------
+$paper-desk: #f3eee7; // 纸面之外的桌色（比纸暗一档，让纸浮起来）
+$paper-fiber: #e9dcc7; // 纸纹点
+$seal: #b23a2b; // 朱砂：印章、当前关标记
+$seal-soft: #f8e9e4; // 朱砂浅底
+$ink-wash: #6f6a62; // 淡墨：次要文字
+$ring-track: #ede4d6; // 环形计时轨道
 
-// 文本色
-$color-text-primary: #1a1d26;
-$color-text-secondary: #5a6270;
-$color-text-tertiary: #9aa1ad;
-$color-text-disabled: #c9cdd4;
+// ============================================
+// 语义别名（旧变量保留，避免一次性改动所有页面）
+// ============================================
+$color-primary: $sunset;
+$color-primary-light: #f2743f;
+$color-primary-dark: $sunset-deep;
+$color-primary-soft: $sunset-soft;
+
+$color-accent: $gold;
+$color-accent-soft: #fbf1dd;
+
+$color-success: $sunset;
+$color-warning: #d9873f;
+$color-error: $brick;
+$color-info: $indigo;
+
+$color-bg-page: $paper-0;
+$color-bg-card: $paper-1;
+$color-bg-hover: $paper-2;
+
+$color-text-primary: $ink-900;
+$color-text-secondary: $ink-600;
+$color-text-tertiary: $ink-400;
+$color-text-disabled: $ink-200;
 $color-text-white: #ffffff;
 
-// 边框色
-$color-border: #f0e8e4;
-$color-divider: #f5ede8;
+$color-border: $line;
+$color-divider: #f0e8db;
 
 // ============================================
 // 业务变量：方格 / 星级 / 遮罩
 // ============================================
 
-// 方格（未点击 / 已完成 / 错误）
-$color-cell-bg: #ffffff;
-// 格子描边：比底色明显一档，否则同色系的相邻格边界看不出来
-$color-cell-border: #e6d5cc;
-$color-cell-text: #1a1d26;
-$color-cell-done-bg: #FF6B35;
-$color-cell-done-text: #ffffff;
-// 错误底色：必须比所有 $cell-tint-* 更深，否则点错的格子反而比普通格更浅
-$color-cell-error-bg: #f8cdc7;
-$color-cell-error-border: #f5483b;
-$color-cell-error-text: #d92d20;
+$color-cell-bg: $paper-1;
+// 格子描边：比底色明显一档，否则相邻格边界看不出来
+$color-cell-border: $line;
+// 格子数字：淡墨偏灰的暖褐，比标题浅两档 —— 纯黑/深墨在近白纸面上太抢，
+// 而且过深会让「找数字」变成「看黑点」，削弱眼力训练的意图
+$color-cell-text: #5b544b;
+// 点过的格子**不改底色、也不改数字颜色**：一旦变灰/变淡，一眼就能看出哪些点过了，
+// 等于替玩家记了位置，难度和「靠眼力搜索」的设计初衷都会被削弱。
+// 所以这里刻意不提供 done 态的颜色令牌 —— 点过的唯一变化是落一枚 ♪（见 GridCell）。
+$color-cell-error-bg: #fbeae5;
+$color-cell-error-border: #d99c8e;
+$color-cell-error-text: $brick;
 
 // 星级
-$color-star: #ffb020;
-$color-star-empty: #f0e8e4;
-$color-star-soft: #fff7e6;
+$color-star: $gold;
+$color-star-empty: #e9dfd0;
+$color-star-soft: #fbf1dd;
 
 // 遮罩与浮层
-$color-overlay: rgba(26, 29, 38, 0.72);
-$color-overlay-light: rgba(255, 255, 255, 0.92);
+$color-overlay: rgba(26, 24, 21, 0.72);
+$color-overlay-light: rgba(255, 253, 248, 0.94);
 
 // 记录标签
-$color-record-bg: #FFE8F0;
-$color-record-text: #b45309;
+$color-record-bg: #fbf1dd;
+$color-record-text: #8a6414;
 
 // ============================================
-// 页面柔光背景（暖色调，活泼快乐）
+// 页面背景（纸面，无渐变）
 // ============================================
-$color-bg-top: #FFF8F0;
-$color-bg-bottom: #FFF0F5;
+$color-bg-top: $paper-0;
+$color-bg-bottom: $paper-0;
 
 // ============================================
-// 方格配色：底色与数字成对出现（红字配红底、蓝字配蓝底…），按数字 1..6 循环
-// 底色保持浅色系（数字要读得清），但比白卡明显一档，相邻格的边界才分得出来
+// 亲子模式：彩色数字（设置里可开）
+// 默认关闭 —— 单色纸面，把注意力还给玩法
 // 注意：tone 数量必须与 GridCell/index.module.scss 的 $tone-count 一致
 // ============================================
-$cell-tint-1: #fadedd; // 红粉
-$cell-tint-2: #f9e7cd; // 橙杏
-$cell-tint-3: #e8f2d3; // 黄绿
-$cell-tint-4: #d7eee3; // 青绿
-$cell-tint-5: #dbe7f9; // 天蓝
-$cell-tint-6: #e6e0f9; // 薰衣草
+// 取色一律走「中国传统色 + 纸感」：底是掺了纸色的淡调，字是同一支色的深调，
+// 饱和度和明度都压在墨色体系里，才不会和纸面打架（旧版是高饱和的糖果色）
+$cell-tint-1: #f8e7e1; // 朱砂
+$cell-tint-2: #f7e9d8; // 赭石
+$cell-tint-3: #f8f0d3; // 藤黄
+$cell-tint-4: #e6efe4; // 竹青
+$cell-tint-5: #e4e9f0; // 黛蓝
+$cell-tint-6: #ede4ea; // 檀紫
 
-$cell-digit-1: #d64b4b;
-$cell-digit-2: #c0761a;
-$cell-digit-3: #6b9a21;
-$cell-digit-4: #148f66;
-$cell-digit-5: #2f6fd0;
-$cell-digit-6: #7355c9;
+$cell-digit-1: #b23a2b;
+$cell-digit-2: #9c5c2b;
+$cell-digit-3: #8a6414;
+$cell-digit-4: #3f6f4f;
+$cell-digit-5: #385a7d;
+$cell-digit-6: #6a4460;
 
-// 双色交替玩法（困难档后 6 关）：只看奇偶，奇数格红、偶数格蓝
-$cell-alt-odd-tint: #fadedd;
-$cell-alt-odd-digit: #d64b4b;
-$cell-alt-even-tint: #dbe7f9;
-$cell-alt-even-digit: #2f6fd0;
-
-// ============================================
-// 圆形卡配色（暖灰系）
-// ============================================
-$color-circle-bg: #FFF5F0;
-$color-circle-border: #E5A080;
+// 双色交替玩法（长调卷后 6 关）：只看奇偶，奇数格暖橙、偶数格靛青
+$cell-alt-odd-tint: #fbe6da;
+$cell-alt-odd-digit: #c4461b;
+$cell-alt-even-tint: #e3ebf5;
+$cell-alt-even-digit: $indigo;
 
 // ============================================
-// 生肖卡配色（线稿风：整张卡裁成生肖轮廓，墨色作轮廓线，格子是轮廓内划分出的浅色小格）
+// 圆形卡配色（瓷盘：格子是纸白小块，盘面是凹槽色，
+// 缝隙露出盘面，才看得出「一格一格」而不是糊成一片）
 // ============================================
-$color-zodiac-ink: #2f2f33;
+$color-circle-bg: $paper-2;
+$color-circle-border: #d8c9b2;
+
+// ============================================
+// 图案卡配色
+// 注意：图案面与线是画在一张 SVG（data URI）里的，SVG 拿不到 SCSS 变量，
+// 所以真正的色值在 `utils/silhouette.ts` 的 PATTERN_FACE_COLOR / PATTERN_LINE_COLOR。
+// 这里保留同名变量是为了「配色只有一处可查」——改色时两处一起改。
+// ============================================
+$color-pattern-face: $paper-1; // 图案内部的面
+$color-pattern-line: #cfbc9e; // 格线与外轮廓

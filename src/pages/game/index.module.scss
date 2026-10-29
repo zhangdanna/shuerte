@@ -1,93 +1,155 @@
 @use '@/styles/variables.scss' as *;
 
 .page {
+  box-sizing: border-box;
   min-height: 100vh;
   padding: $spacing-md $page-padding $spacing-lg;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(180deg, $color-bg-top 0%, $color-bg-bottom 360rpx);
+  background-color: $paper-0;
+  @include paper-grain;
 }
 
-.hud {
+// ============ 顶栏：曲名 · 档位 · 关序（单行，照设计稿） ============
+.topbar {
   width: 686rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  background-color: $color-bg-card;
-  border-radius: $radius-lg;
-  box-shadow: $shadow-card;
 }
 
-.targetBlock {
+.titleRow {
+  flex: 1;
+  min-width: 0;
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
 }
 
-.hudLabel {
-  font-size: $font-size-xs;
-  color: $color-text-tertiary;
-  line-height: $line-height-tight;
-}
-
-.targetValue {
-  margin-top: 4rpx;
-  font-size: 64rpx;
-  font-weight: $font-weight-bold;
-  line-height: 1;
-  color: $color-text-primary;
-}
-
-.metaRow {
-  width: 686rpx;
-  margin-top: $spacing-md;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.metaText {
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
-}
-
-.errorCount {
+.songTitle {
+  font-family: $font-serif;
+  font-size: 38rpx;
   font-weight: $font-weight-semibold;
-  color: $color-error;
+  color: $ink-900;
+  line-height: 1.2;
+  flex: 0 0 auto;
 }
 
-.pauseBtn {
-  height: $button-height-sm;
-  min-width: 140rpx;
-  padding: 0 $spacing-lg;
+.songSub {
+  margin-left: 8rpx;
+  font-size: 26rpx;
+  color: $ink-400;
+  @include text-ellipsis;
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.iconBtn {
+  width: 64rpx;
+  height: 64rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: $color-bg-card;
-  border: 2rpx solid $color-border;
-  border-radius: $radius-button;
+  border: 2rpx solid $line;
+  border-radius: $radius-round;
+  background-color: $paper-1;
 
   &:active {
-    opacity: 0.9;
+    background-color: $paper-2;
   }
 }
 
-.pauseBtnText {
+.iconBtnOff .iconText {
+  color: $ink-200;
+  text-decoration: line-through;
+}
+
+.iconText {
   font-size: $font-size-sm;
-  color: $color-text-secondary;
-  white-space: nowrap;
+  color: $ink-600;
+  line-height: 1;
+}
+
+// ============ 环形计时 + 目标数字 ============
+.hud {
+  margin-top: $spacing-lg;
+  display: flex;
+  justify-content: center;
+}
+
+// ============ 小节进度：8 段谱线，点过一段亮一段 ============
+.segments {
+  width: 686rpx;
+  margin-top: $spacing-lg;
+  display: flex;
+  gap: 12rpx;
+}
+
+.segment {
+  flex: 1;
+  height: 6rpx;
+  border-radius: 3rpx;
+  background-color: $ring-track;
+  overflow: hidden;
+}
+
+.segmentFill {
+  height: 100%;
+  background-color: $sunset;
+  border-radius: 3rpx;
+  transition: width 0.18s ease-out;
 }
 
 .gridArea {
   margin-top: $spacing-md;
 }
 
-.hint {
-  margin-top: $spacing-md;
-  font-size: $font-size-xs;
-  color: $color-text-tertiary;
-  text-align: center;
+// ============ 引子引导：跟着进度换一句 ============
+.guideBubble {
+  margin-top: $spacing-lg;
+  padding: 14rpx 28rpx;
+  background-color: $sunset-soft;
+  border-radius: $radius-round;
+  animation: tipIn 0.3s ease-out;
+}
+
+.guideText {
+  font-size: $font-size-sm;
+  color: $sunset-deep;
+}
+
+// 引子通关的朱砂印
+.seal {
+  width: 96rpx;
+  height: 96rpx;
+  margin-bottom: $spacing-md;
+  @include seal-chip;
+  border-width: 4rpx;
+  border-radius: $radius-sm;
+  transform: rotate(-4deg);
+}
+
+.sealText {
+  font-size: 44rpx;
+  font-weight: $font-weight-semibold;
+  line-height: 1;
+  color: $seal;
+}
+
+@keyframes tipIn {
+  from {
+    opacity: 0;
+    transform: translateY(8rpx);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 // ============ 倒计时 / 暂停遮罩 ============
@@ -105,18 +167,33 @@
   background-color: $color-overlay;
 }
 
+.overlaySong {
+  font-family: $font-serif;
+  font-size: $font-size-xl;
+  color: rgba(255, 253, 248, 0.82);
+  margin-bottom: $spacing-lg;
+}
+
 .countdown {
   font-size: 200rpx;
   font-weight: $font-weight-bold;
   line-height: 1;
-  color: $color-text-white;
+  color: $paper-1;
   animation: countdownIn 0.9s ease;
 }
 
 .overlayTip {
   margin-top: $spacing-lg;
   font-size: $font-size-md;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 253, 248, 0.85);
+  text-align: center;
+  padding: 0 $spacing-xl;
+}
+
+.overlayLimit {
+  margin-top: $spacing-xs;
+  font-size: $font-size-sm;
+  color: rgba(255, 253, 248, 0.5);
 }
 
 .pauseCard {
@@ -125,21 +202,41 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: $color-bg-card;
+  background-color: $paper-1;
   border-radius: $radius-xl;
   box-shadow: $shadow-popup;
 }
 
+// 暂停 = 唱片停转
+.disc {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: $radius-round;
+  background-color: #2f2f33;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $spacing-md;
+}
+
+.discLabel {
+  width: 34rpx;
+  height: 34rpx;
+  border-radius: $radius-round;
+  background-color: $sunset;
+}
+
 .pauseTitle {
+  font-family: $font-serif;
   font-size: $font-size-xl;
   font-weight: $font-weight-semibold;
-  color: $color-text-primary;
+  color: $ink-900;
 }
 
 .pauseDesc {
   margin-top: $spacing-xs;
   font-size: $font-size-sm;
-  color: $color-text-tertiary;
+  color: $ink-400;
 }
 
 // ============ 按钮 ============
@@ -150,12 +247,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  background-color: $sunset;
   border-radius: $radius-button;
   transition: all $transition-base;
 
   &:active {
-    opacity: 0.9;
+    background-color: $sunset-deep;
     transform: scale(0.98);
   }
 }
@@ -174,18 +271,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: $color-bg-card;
-  border: 2rpx solid $color-border;
+  background-color: $paper-1;
+  border: 2rpx solid $line;
   border-radius: $radius-button;
 
   &:active {
-    opacity: 0.9;
+    background-color: $paper-2;
   }
 }
 
 .ghostBtnText {
   font-size: $font-size-md;
-  color: $color-text-secondary;
+  color: $ink-600;
   white-space: nowrap;
 }
 
@@ -200,15 +297,16 @@
 }
 
 .emptyTitle {
+  font-family: $font-serif;
   font-size: $font-size-xl;
   font-weight: $font-weight-semibold;
-  color: $color-text-primary;
+  color: $ink-900;
 }
 
 .emptyDesc {
   margin-top: $spacing-sm;
   font-size: $font-size-sm;
-  color: $color-text-tertiary;
+  color: $ink-400;
 }
 
 @keyframes countdownIn {

@@ -1,0 +1,224 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding 160rpx;
+  background-color: $paper-0;
+  @include paper-grain;
+}
+
+.header {
+  margin-bottom: $spacing-lg;
+}
+
+.title {
+  display: block;
+  font-family: $font-serif;
+  font-size: 52rpx;
+  font-weight: $font-weight-bold;
+  color: $ink-900;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  display: block;
+  margin-top: 6rpx;
+  font-size: $font-size-sm;
+  color: $ink-400;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+// ============ 唱片条目 ============
+.record {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: 20rpx;
+  background-color: $paper-1;
+  border: 2rpx solid $line;
+  border-radius: $radius-lg;
+  transition: transform $transition-fast;
+
+  &:active {
+    transform: scale(0.995);
+  }
+}
+
+.recordLocked {
+  background-color: rgba(255, 253, 248, 0.6);
+  border-style: dashed;
+}
+
+.recordGold {
+  border-color: rgba(223, 162, 46, 0.55);
+}
+
+.recordPlaying {
+  border-color: $sunset;
+  box-shadow: 0 0 0 2rpx rgba(232, 93, 42, 0.12);
+}
+
+// ============ 唱片 ============
+// 尺寸交给槽位，Disc 组件用 100% 铺满（首页/对局页共用同一份实现）
+.discSlot {
+  width: 108rpx;
+  height: 108rpx;
+  flex: 0 0 auto;
+}
+
+.recordLocked .discSlot {
+  opacity: 0.35;
+}
+
+// ============ 信息 ============
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+// 曲目序号：一枚小朱印，提示这是一本按序排的谱册
+.numeral {
+  flex: 0 0 auto;
+  padding: 0 6rpx;
+  font-family: $font-serif;
+  font-size: 20rpx;
+  line-height: 28rpx;
+  color: $seal;
+  border: 2rpx solid rgba(178, 58, 43, 0.45);
+  border-radius: $radius-xs;
+}
+
+.recordTitle {
+  font-family: $font-serif;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $ink-900;
+}
+
+.goldTag {
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: $radius-round;
+  background-color: $gold;
+  color: #fffdf8;
+}
+
+.doneTag {
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: $radius-round;
+  background-color: $paper-2;
+  color: $ink-600;
+}
+
+.encoreTag {
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: $radius-round;
+  border: 2rpx solid $line;
+  color: $ink-400;
+}
+
+.recordMeta {
+  margin-top: 4rpx;
+  font-size: $font-size-xs;
+  color: $ink-400;
+}
+
+.segments {
+  margin-top: $spacing-xs;
+  display: flex;
+  gap: 6rpx;
+}
+
+.segment {
+  flex: 1;
+  height: 8rpx;
+  border-radius: 4rpx;
+  background-color: $paper-2;
+}
+
+.segmentOn {
+  background-color: $sunset;
+}
+
+.recordGold .segmentOn {
+  background-color: $gold;
+}
+
+.progress {
+  margin-top: 8rpx;
+  height: 4rpx;
+  border-radius: 2rpx;
+  background-color: $paper-2;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: $sunset-deep;
+  transition: width 0.1s linear;
+}
+
+// ============ 右侧评级 ============
+.right {
+  flex: 0 0 auto;
+  width: 96rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gradeLetter {
+  font-family: $font-serif;
+  font-size: 36rpx;
+  font-weight: $font-weight-bold;
+  color: $gold;
+  line-height: 1;
+}
+
+.gradeText {
+  margin-top: 2rpx;
+  font-size: 20rpx;
+  color: $ink-400;
+}
+
+.lockText {
+  font-size: $font-size-xs;
+  color: $ink-200;
+}
+
+.playHint {
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: $sunset;
+  // 「回放我的 / 回放原曲」是 4 个字，别让它折行把条目撑高
+  white-space: nowrap;
+}
+
+.encore .playHint,
+.recordLocked .playHint {
+  color: $ink-200;
+}
+
+.footer {
+  display: block;
+  margin-top: $spacing-lg;
+  font-size: $font-size-xs;
+  color: $ink-200;
+  text-align: center;
+}

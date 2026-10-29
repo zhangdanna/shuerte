@@ -1,0 +1,113 @@
+@use '@/styles/variables.scss' as *;
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+// 环形计时：conic-gradient 画最外一圈进度，里面垫一张黑胶唱片与一圈纸盘
+.ring {
+  position: relative;
+  width: 264rpx;
+  height: 264rpx;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // 不支持 conic-gradient 的老 WebView 会退回这个纯色环
+  background-color: $ring-track;
+  transition: background 0.2s linear;
+}
+
+// 唱片层：盖住进度环内侧，露出最外 8rpx 作为剩余时间
+.discLayer {
+  position: absolute;
+  top: 8rpx;
+  left: 8rpx;
+  right: 8rpx;
+  bottom: 8rpx;
+}
+
+// 纸盘：托住目标数字，让大字号压在黑胶上也不糊
+.plate {
+  position: absolute;
+  top: 44rpx;
+  left: 44rpx;
+  right: 44rpx;
+  bottom: 44rpx;
+  border-radius: $radius-round;
+  background-color: $paper-0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// 目标数字：整屏绝对主角
+.target {
+  font-size: 96rpx;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: $ink-900;
+  font-variant-numeric: tabular-nums;
+  animation: breathe 2s ease-in-out infinite;
+}
+
+.meta {
+  margin-top: 14rpx;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.remaining {
+  font-size: $font-size-sm;
+  color: $ink-400;
+  font-variant-numeric: tabular-nums;
+}
+
+// 失误徽章：0 次时保持纸面安静，有失误才染朱
+.errorBadge {
+  padding: 2rpx 14rpx;
+  border: 2rpx solid $line;
+  border-radius: $radius-round;
+}
+
+.errorBadgeOn {
+  border-color: $color-cell-error-border;
+  background-color: $color-cell-error-bg;
+}
+
+.errorText {
+  font-size: $font-size-xs;
+  line-height: 1.4;
+  color: $ink-200;
+  font-variant-numeric: tabular-nums;
+}
+
+.errorTextOn {
+  color: $brick;
+}
+
+// 只有警戒/危险态才染负面色，其余保持纸面安静
+.warning {
+  color: #a9762f;
+}
+
+.danger {
+  color: $brick;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.94;
+  }
+
+  50% {
+    transform: scale(1.025);
+    opacity: 1;
+  }
+}

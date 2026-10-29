@@ -1,28 +1,32 @@
 import { CardStyle, ChapterConfig, GameMode, LevelConfig, LevelThresholds } from '@/types/game';
-import zodiacShapes from '@/data/zodiacShapes.json';
+import patternShapes from '@/data/patternShapes.json';
+import { getSongForLevel } from '@/data/songs';
 
 /**
  * 星级阈值（毫秒）与限时（毫秒），均按尺寸查表。
  * 阈值口径参考舒尔特方格训练标准：5×5（25 格）成人熟练约 20 秒、达标约 30 秒。
- * 限时给到达标的 1.5~2 倍，留出手滑与思考空间——限时是「别卡住」的兜底，不是主要压力来源。
+ * 限时由 silver 阈值推导（见下方 SIZE_TIME_LIMITS），不再单独拍脑袋定。
  */
-const SIZE_THRESHOLDS: Record<number, LevelThresholds> = {
-  3: { gold: 6000, silver: 9000 },
-  4: { gold: 12000, silver: 18000 },
-  5: { gold: 25000, silver: 36000 },
-  6: { gold: 42000, silver: 58000 },
-  7: { gold: 65000, silver: 88000 },
-  8: { gold: 95000, silver: 125000 }
+const SIZE_THRESHOLDS: Record<number, Omit<LevelThresholds, 'platinum'>> = {
+  3: { gold: 5000, silver: 8000 },
+  4: { gold: 10000, silver: 15000 },
+  5: { gold: 22000, silver: 32000 },
+  6: { gold: 38000, silver: 55000 },
+  7: { gold: 58000, silver: 82000 },
+  8: { gold: 82000, silver: 115000 }
 };
 
-/** 每关限时（毫秒）：6×6 起大尺寸明显更吃时间，在基础表上各加 10 秒 */
+/**
+ * 每关限时（毫秒）= 达标线（silver）× 1.15，3×3 例外给到 ×1.5（新手第一关，别一上来就失败）。
+ * 旧表是「达标线 × 1.5~2」，等于怎么点都能过 —— 限时形同虚设，故收紧到「超过达标线 15% 就失败」。
+ */
 const SIZE_TIME_LIMITS: Record<number, number> = {
-  3: 15000,
-  4: 25000,
-  5: 40000,
-  6: 70000,
-  7: 95000,
-  8: 125000
+  3: 12000,
+  4: 17000,
+  5: 37000,
+  6: 63000,
+  7: 94000,
+  8: 132000
 };
 
 /** 尺寸阶梯：3×3 起步，逐关 +1 到 8×8 */
@@ -35,27 +39,27 @@ const SIZE_STEPS: number[] = [3, 4, 5, 6, 7, 8];
 const CYCLES_PER_TIER = 2;
 
 /**
- * 三档难度（界面上只呈现难度档位）。
+ * 三档难度（界面上只呈现曲体档位，取自词乐/民歌的曲式长度：小令短、中调中、长调长）。
  * 卡片造型是该档的固定皮肤，不在 UI 上作为分类展示：
- *   初级 = 方形卡，高级 = 圆形卡（沿圆周分区），困难 = 生肖卡（生肖轮廓内划分格子）。
+ *   小令 = 方形卡，中调 = 圆形卡（沿圆周分区），长调 = 图案卡（不规则图案轮廓内划分格子）。
  */
 const TIER_BLUEPRINTS: Array<{
   title: string;
-  /** 难度档的节奏说明，拼在尺寸区间后面 */
+  /** 档位气质，拼在尺寸区间后面 */
   pace: string;
   cardStyle: CardStyle;
   starGate: number;
-  /** 每关满星：初级 3 / 高级 4 / 困难 5 */
+  /** 每关满星：小令 3 / 中调 4 / 长调 5 */
   maxStars: number;
   /** 第二轮（后 6 关）的变体玩法 */
   variant: GameMode;
 }> = [
-  { title: '初级', pace: '节奏舒缓', cardStyle: 'square', starGate: 0, maxStars: 3, variant: 'reverse' },
-  { title: '高级', pace: '标准计时', cardStyle: 'circle', starGate: 8, maxStars: 4, variant: 'reverse' },
-  { title: '困难', pace: '极限计时', cardStyle: 'zodiac', starGate: 16, maxStars: 5, variant: 'alternate' }
+  { title: '小令', pace: '纸面方寸', cardStyle: 'square', starGate: 0, maxStars: 3, variant: 'reverse' },
+  { title: '中调', pace: '圆盘流转', cardStyle: 'circle', starGate: 8, maxStars: 4, variant: 'reverse' },
+  { title: '长调', pace: '异形拼花', cardStyle: 'pattern', starGate: 16, maxStars: 5, variant: 'alternate' }
 ];
 
-/** 极速档系数：困难档在 gold 阈值上再压 15%，是第 5 颗星的唯一入口 */
+/** 极速档系数：长调档在 gold 阈值上再压 15%，是第 5 颗星的唯一入口 */
 const PLATINUM_RATIO = 0.85;
 
 /** 每档关数 = 尺寸阶梯 × 循环数 */
@@ -103,8 +107,10 @@ const buildLevels = (chapter: ChapterConfig, tierIndex: number): LevelConfig[] =
       total: size * size,
       cardStyle: chapter.cardStyle,
       mode: pass === 0 ? 'forward' : blueprint.variant,
-      // 生肖档共 12 关，正好把 12 生肖依次走一遍
-      zodiacIndex: chapter.cardStyle === 'zodiac' ? (index - 1) % zodiacShapes.length : null,
+      // 每档两首曲子：前 6 关弹曲 A，后 6 关（变体玩法）弹曲 B
+      songId: getSongForLevel(tierIndex, pass).id,
+      // 图案档共 12 关，正好把 12 个图案依次走一遍
+      patternIndex: chapter.cardStyle === 'pattern' ? (index - 1) % patternShapes.length : null,
       maxStars: blueprint.maxStars,
       thresholds: {
         gold: Math.round(thresholds.gold * factor),
@@ -125,7 +131,35 @@ export const LEVELS: LevelConfig[] = CHAPTERS.reduce<LevelConfig[]>(
   []
 );
 
-export const getLevelById = (id: string): LevelConfig | undefined => LEVELS.find((level) => level.id === id);
+/** 指引关 id：不属于任何一轮，也不进 LEVELS（不占星、不进曲集、不影响解锁门槛） */
+const GUIDE_LEVEL_ID = 'guide';
+
+/**
+ * 引子（指引关）：第一关之前的教学局。
+ * 3×3、无评星、不写档、不会超时失败 —— 它只负责把「按顺序点数字」这件事讲明白，
+ * 所以首页不再需要常驻的文字说明。通关后只解锁第一关。
+ */
+export const GUIDE_LEVEL: LevelConfig = {
+  id: GUIDE_LEVEL_ID,
+  chapterId: 0,
+  chapterTitle: '引子',
+  tutorial: true,
+  index: 0,
+  globalIndex: 0,
+  size: 3,
+  total: 9,
+  cardStyle: 'square',
+  patternIndex: null,
+  mode: 'forward',
+  songId: getSongForLevel(0, 0).id,
+  maxStars: 0,
+  thresholds: { gold: 0, silver: 0, platinum: null },
+  // 教学局不该被时间逼死：9 个数字给足 60 秒，且引擎对 tutorial 关不做超时判定
+  timeLimit: 60000
+};
+
+export const getLevelById = (id: string): LevelConfig | undefined =>
+  id === GUIDE_LEVEL_ID ? GUIDE_LEVEL : LEVELS.find((level) => level.id === id);
 
 export const getChapterById = (id: number): ChapterConfig | undefined =>
   CHAPTERS.find((chapter) => chapter.id === id);

@@ -4,6 +4,7 @@ $tone-count: 6;
 $tints: $cell-tint-1, $cell-tint-2, $cell-tint-3, $cell-tint-4, $cell-tint-5, $cell-tint-6;
 $digits: $cell-digit-1, $cell-digit-2, $cell-digit-3, $cell-digit-4, $cell-digit-5, $cell-digit-6;
 
+// 格子只有数字和纸：默认单色纸面，不上任何底色
 .cell {
   position: relative;
   width: 100%;
@@ -12,8 +13,13 @@ $digits: $cell-digit-1, $cell-digit-2, $cell-digit-3, $cell-digit-4, $cell-digit
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  background-color: $color-cell-bg;
   border: 2rpx solid $color-cell-border;
-  border-radius: $radius-md;
+  border-radius: $radius-lg;
+  // 显式给暖墨：不写就继承到页面默认的纯黑，近白格面上会显得又黑又硬
+  color: $color-cell-text;
+  // 极浅投影：纸片浮在纸面上，不靠重阴影
+  box-shadow: 0 1rpx 0 rgba(26, 24, 21, 0.03), 0 2rpx 6rpx rgba(26, 24, 21, 0.04);
   transition: transform $transition-fast;
 
   &:active {
@@ -21,7 +27,7 @@ $digits: $cell-digit-1, $cell-digit-2, $cell-digit-3, $cell-digit-4, $cell-digit
   }
 }
 
-// 数字与底色成对配色：按数字对 6 取模循环，同一个色号永远是「同色底 + 同色字」
+// 亲子模式（设置里可开）：数字与底色成对循环，同一个色号永远是「同色底 + 同色字」
 @for $i from 1 through $tone-count {
   .tone#{$i} {
     background-color: nth($tints, $i);
@@ -32,7 +38,7 @@ $digits: $cell-digit-1, $cell-digit-2, $cell-digit-3, $cell-digit-4, $cell-digit
   }
 }
 
-// 双色交替玩法：只看数字奇偶，奇数格红、偶数格蓝（与上面的 6 色循环互斥）
+// 双色交替玩法：只看数字奇偶，奇数格暖橙、偶数格靛青（与上面的 6 色循环互斥）
 .toneOdd {
   background-color: $cell-alt-odd-tint;
 
@@ -53,6 +59,18 @@ $digits: $cell-digit-1, $cell-digit-2, $cell-digit-3, $cell-digit-4, $cell-digit
 .clipped {
   border: none;
   border-radius: 0;
+  box-shadow: none;
+}
+
+// 图案卡的格子：完全透明，只剩「点击热区 + 数字」。
+// 图案面与格线都在底层的 SVG 线条层里，格子一旦有底色/描边/圆角/阴影，
+// 立刻又会变成「一堆小卡片」—— 所以这里必须盖掉所有纸片属性，
+// 优先级要压过 .tone1~6 与 .toneOdd/.toneEven 的底色（彩色/双色只保留数字颜色）。
+.cell.ghost {
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 // 铺满整张卡片的格子（圆形卡）：几何坐标相对整张卡片计算
@@ -72,6 +90,7 @@ $digits: $cell-digit-1, $cell-digit-2, $cell-digit-3, $cell-digit-4, $cell-digit
   font-size: inherit;
   font-weight: $font-weight-semibold;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .floatingValue {
@@ -79,9 +98,47 @@ $digits: $cell-digit-1, $cell-digit-2, $cell-digit-3, $cell-digit-4, $cell-digit
   transform: translate(-50%, -50%);
 }
 
-// 点对：只播一次点击动效，底色保持原样（不做「已点击」变色）
+// 点对：只播一次点击动效，底色与数字颜色都保持原样
+// （数字一旦变淡/变灰，玩家扫一眼就知道哪些点过了，等于替玩家记位置，难度会被削掉）
 .cell.done {
   animation: cellTap 0.3s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+// 音符标记：**只有点过的格子**才落一枚 ♪，当作「这一格已点」的唯一提示。
+// 没点过的格子只有数字，整张卡看起来才是一张干净待填的乐谱。
+.cell.done:not(.clipped)::after {
+  content: '♪';
+  position: absolute;
+  // 间距同样用 em，但 em 基准是音符自身字号：0.42em × 0.42 ≈ 0.18 格，缩进刚好
+  right: 0.42em;
+  bottom: 0.3em;
+  // 0.32em 时在 8×8 的小格里只剩 7px，看着像一点污渍；放大到 0.42em 才是可读的音符
+  font-size: 0.42em;
+  line-height: 1;
+  color: rgba(216, 78, 30, 0.72);
+  pointer-events: none;
+  animation: noteIn 0.28s ease both;
+}
+
+// 异形格（圆形扇环 / 图案轮廓）是整卡铺满再裁出来的，右下角在卡片外面，
+// 所以音符改为「跟在数字后面」——否则点完一点反馈都没有
+.cell.done.clipped .value::after {
+  content: '♪';
+  font-size: 0.62em;
+  margin-left: 0.12em;
+  color: rgba(216, 78, 30, 0.72);
+}
+
+@keyframes noteIn {
+  0% {
+    opacity: 0;
+    transform: translateY(0.12em);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 // 分区格子不能缩放（会和剪裁形状错位），改成一次淡闪
@@ -92,6 +149,7 @@ $digits: $cell-digit-1, $cell-digit-2, $cell-digit-3, $cell-digit-4, $cell-digit
 // 点错：红底 + 抖动，状态色用双类名提高优先级，稳定覆盖上面的配色
 .cell.error {
   background-color: $color-cell-error-bg;
+  border-color: $color-cell-error-border;
   animation: cellShake 0.3s ease;
 }
 
