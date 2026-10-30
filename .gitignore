@@ -31,4 +31,3 @@ npm-debug.log*
 .env*
 *.key
 .workbuddy-ai
-dist

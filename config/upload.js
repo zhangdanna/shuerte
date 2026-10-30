@@ -3,8 +3,8 @@ const ci = require('miniprogram-ci');
 const path = require('path');
 
 // 每次上传前修改这两项
-const VERSION = '1.0.0'; // 版本号，需在版本管理中与历史版本区分
-const DESC = '首个版本'; // 本次更新说明
+const VERSION = '2.0.0'; // 版本号，需在版本管理中与历史版本区分
+const DESC = '古风乐谱纸画风全新改版；新增演奏音乐系统——原创曲库、演奏评级、曲集回放与黑胶唱片'; // 本次更新说明
 
 (async () => {
   const project = new ci.Project({
