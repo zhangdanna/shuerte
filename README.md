@@ -331,3 +331,4 @@ settings     { sound, music, accompaniment, haptics, colorful, timbre }
 | [`docs/game-design.md`](./docs/game-design.md) | 早期游戏大纲：游戏模块、关卡设计、通关规则、奖励机制、留存设计、新手 60 秒脚本 |
 | [`docs/design-v2.md`](./docs/design-v2.md) | v2 视觉与音乐系统改版方案与决策记录 |
 | [`docs/tech-plan.md`](./docs/tech-plan.md) | 技术方案：选型、目录分层、核心模块设计、性能与扩展性、里程碑 |
+
