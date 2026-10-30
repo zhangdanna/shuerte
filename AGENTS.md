@@ -19,6 +19,9 @@
 | --- | --- |
 | 启动 / 刷新预览 | `node "c:\Users\danna.zhang\.trae-cn\builtin_skills\TRAE-generate-mini-app\scripts\preview-server.js" d:\working\play\yanlidazuozhan\shuerte` |
 | 重新生成音效 | `node scripts/gen-sounds.js` |
+| 重新生成曲库 | `node scripts/gen-songs.js`（改 `SPECS` / `HOOKS` 后必跑，会重写 `src/data/songs.ts`） |
+| 和声体检 | `node scripts/analyze-songs.js` / `node scripts/analyze-songs.js classics`（强拍冲突必须为 0，退出码非 0 即不通过） |
+| 旋律相似度自查 | `node scripts/audio-similarity.js`（音程串比对，连续 ≥8 音重合即报警；改旋律后必跑） |
 | 获取技能资产目录 | `node "c:\Users\danna.zhang\.trae-cn\builtin_skills\TRAE-generate-mini-app\scripts\get-skill-assets-dir.js"` |
 | 重新生成图案轮廓 | `WRITE=1 node scripts/gen-pattern-shapes.js`（改的是 `scripts/gen-pattern-shapes.js` 里的 `parts`；`ASCII=1` 看轮廓） |
 | 校验图案轮廓与分格 | `node scripts/preview-shapes.js [形状名]`（`ASCII=1` 看轮廓、`DIVIDE=5` 看分格；改了图案轮廓必跑） |
@@ -46,7 +49,7 @@
 | 技术栈 | Taro 4.1.9 + React 18 + TypeScript 5 + Sass（CSS Modules）+ zustand + dayjs + classnames |
 | 设计稿基准 | 750rpx（`config/index.ts` 的 `designWidth: 375`，**代码里统一写 rpx**） |
 | 数据 | 纯本地，无后端、无登录、不涉及云开发 |
-| 进度 | v2 完成：36 关（小令/中调/长调 三卷 × 12 关 = 前 6 关正序 + 后 6 关变体（小令/中调倒序、长调双色），尺寸 3×3→8×8，卡片造型 方形/圆形/图案，每关限时、计时、音效、存档、星级结算（满星 3/4/5））+ 第一关前的「引子」指引关 + 顺序解锁；M2/M3 见 §3 |
+| 进度 | v2 完成：36 关（小令/中调/长调 三卷 × 12 关 = 前 6 关正序 + 后 6 关变体（小令/中调倒序、长调双色），尺寸 3×3→8×8，卡片造型 方形/圆形/图案，每关限时、计时、音效、存档、星级结算（满星 3/4/5））+ 第一关前的「引子」指引关 + 顺序解锁；音频系统完成（6 首算法原创 + 4 声部伴奏引擎 + 6 首公有领域名曲按战绩解锁）；M2/M3 见 §3 |
 
 ---
 
@@ -108,15 +111,19 @@
 | 计时显示 | `components/TimerRing` | ✅ 完成 | 50ms 刷新被隔离在组件内部；外圈是「朱砂进度环（8rpx）+ 黑胶唱片层 + 纸盘数字」三层，唱片复用 `Disc`（26s 一圈慢转） |
 | 星级展示 | `components/StarRating` | ✅ 完成 | sm/md/lg + 结算页弹出动画 |
 | 关卡卡片 | `components/LevelCard` | ✅ 完成 | 尺寸徽标 + 星级 + 最佳用时 + 锁态/当前高亮 |
-| 音效 | `services/audio.ts` + `data/sounds.ts` | ✅ 完成 | 4 个音效（tick/click/error/success），base64 内联 |
+| 音效 | `services/audio.ts` + `data/sounds.ts` | ✅ 完成 | 4 个音效（tick/click/error/success），base64 内联；演奏音与音效两条链路互不影响，可分别开关 |
+| 曲库与和声 | `data/songs.ts` + `scripts/gen-songs.js` + `scripts/analyze-songs.js` | ✅ 完成 | 6 首算法原创（16 小节 × 4 拍 = 64 音）；**和弦轨与旋律共用同一份「分段进行」**（B 段 bar 8–11 反转），`removeFriction` 清掉 1/6/11 半音的三类和声冲突；低音轨是走动低音（根–五–根–三）不是踏板；体检脚本的验收线是「强拍冲突 = 0」 |
+| 伴奏引擎 | `services/accompaniment.ts` + `services/audio.ts` | ✅ 完成 | 4 声部（低音/铺底/琶音/轻击）+ 分段动态（0–3 只低音铺底、4–7 加琶音、8–11 全开、末小节留白）；**单一 lookahead 调度**（25→30ms 醒一次、提前 0.25s 排程、全部用 `osc.start(when)` 绝对时间），旋律与伴奏同一时间轴；伴奏按 `barTimes[b] = noteTimes[b*4]` 跟随玩家击键，**不做量化**；旋律/伴奏声部分池（16/24），互不抢占 |
+| 名曲拾遗 | `data/classics.ts` + `utils/classics.ts` | ✅ 完成 | 6 首公有领域名曲（欢乐颂/小步舞曲/致爱丽丝/卡农/绿袖子/茉莉花），自行记谱编配；解锁只认战绩（累计星星 24/48/72/96、1 张金唱片、8 关 S 评级），**全部由存档现算、不新增字段**；只进曲集、不进关卡 |
+| 版权治理 | `docs/audio-license.md` + `scripts/audio-similarity.js` | ✅ 完成 | 资产清单 + 生成参数 + 判定依据 + 红线；音程串（移调不变量）最长公共子串比对，阈值 8 音 |
 | 震动 | `services/haptics.ts` | ✅ 完成 | 仅失误与通关触发 |
 | 存档 | `store/useSaveStore.ts` + `services/storage.ts` | ✅ 完成 | zustand persist，key = `shuerte_save` |
 | 首页 | `pages/home/index` | ✅ 完成 | 谱纸首屏（五线谱 + 音符依次点亮）、宣传语、当前曲目（唱片常转，9s 一圈）、三卷进度、主按钮、拾星/收录/连续；无玩法长文案；导航栏标题置空，H5 端由 `useEffect` 兜底 `document.title` |
 | 关卡地图 | `pages/levels/index` | ✅ 完成 | 卷首总星进度、三卷签条（小令/中调/长调）、卷首卡、引子入口、两列关卡卡、锁态与解锁提示 |
 | 对局页 | `pages/game/index` | ✅ 完成 | 单行「曲名 · 卷名 关序」、环形计时（剩余 xx″ + ×失误徽章）、8 段谱线、引子引导语、倒计时/暂停/引子通关浮层、限时失败跳转、参数校验 |
 | 结算页 | `pages/result/index` | ✅ 完成 | 通关：星级动画 + 破纪录 + 挑战下一关；失败：用时/失误/完成度，只能重打 |
-| 曲集页 | `pages/collection/index` | ✅ 完成 | 6 张唱片按顺序开卷（未至 / 未收录 / 已收录 / 金唱片四态）、汉字序号朱印、**回放的是玩家最好那一次的击键节奏**（`utils/beats.ts` 取该曲记录最长的一关）、回放中该条唱片转 3.6s 一圈、安可曲碎片进度 |
-| 我的页 | `pages/mine/index` | ✅ 完成 | 演奏者统计卡（星/通关/场次/连续/碎片）+ 声音、画面两组设置 + 清空；今日成绩与最近成绩已移除 |
+| 曲集页 | `pages/collection/index` | ✅ 完成 | 6 张唱片按顺序开卷（未至 / 未收录 / 已收录 / 金唱片四态）、汉字序号朱印、**回放的是玩家最好那一次的击键节奏**（`utils/beats.ts` 取该曲记录最长的一关）、回放中该条唱片转 3.6s 一圈；标题行右侧有「伴奏 开/关」即时开关；下方「名曲拾遗」区块按战绩解锁；音色文案由 `song.style` 派生（不再写死在档位上） |
+| 我的页 | `pages/mine/index` | ✅ 完成 | 演奏者统计卡（星/通关/场次/连续/金唱片）+ 声音（演奏音/伴奏/提示音/震动/音色）、画面两组设置 + 清空；「音符碎片」随安可曲占位一并移除 |
 | 全局配置 | `app.config.ts` / `styles/theme.scss` / 6 个 tabBar 图标 | ✅ 完成 | 青绿主题 |
 
 ### 3.2 未开始 / 待办（按建议优先级）
@@ -153,6 +160,7 @@
 | 唱片转动 / 格子音符 / 数字墨色 / 首页标题 | ✅ CDP 读计算样式核验：首页唱片 `animationName=discSpin`、`9s`、两次采样 `transform` 不同（确实在转）；曲集点击第一条后唱片变 `3.6s` 且 transform 持续变化、条目显示「停止」+ 进度条；对局页 7×7 每格右下角有 ♪（淡朱，点过后加深）、数字为 `#2f2a24` 暖墨；引子页不限时环形满圈正常；首页 `document.title=眼力大作战` 且页面内无导航栏元素 |
 | 预览服务掉线恢复 + 「我的」页列表 key 修复 | ✅ 浏览器实测通过（重启后首页→关卡→点第 1 关正常进入对局页，无「应用程序异常」/`ChunkLoadError`，可通关并写档；「我的」页今日/最近成绩列表正常渲染，控制台不再出现 `unique "key" prop` 警告，无新增报错） |
 | 图案卡替换生肖 + ♪ 改按需 + 数字提浅 + 彩色配色 + 限时收紧 | ✅ `tsc --noEmit` 通过；`preview-shapes.js` 12 图案 × 3~8 尺寸 72 组合全部划分成功（连通块=1、最小格 17~36rpx、面积 18%~42%）；`preview-cards.js` 截图逐张核对：圆盘 3/5/8 缝隙清晰有圆角、12 图案 5×5 轮廓可辨（花瓣/星角/齿轮齿清楚）、六角星与五瓣花 8×8 分格铺满、五瓣花「已点示例」里 ♪ 只落在已点格且跟在数字后、方形卡「已点示例」♪ 只出现在 1~7 号格右下角；图案卡底色实测 `#e3d5bd` 与棋盘同族、数字 `#5b544b` 明显比原 `#2f2a24` 浅 |
+| 音频系统（修音 + 伴奏 + 名曲） | ✅ `tsc --noEmit` + `build:h5` 通过；`analyze-songs.js` 原创 6 首「强拍冲突 0 / 弱拍经过 0 / 大跳 0」、名曲 6 首「强拍冲突 0」（6 处弱拍经过音是刻意保留的）；`audio-similarity.js` 12 首全部 PASS（无 ≥8 音程重合）；`buildBarPlan` 逐小节核对配器 —— 0–3 只有 bass+pad、4–7 加 arp、8–14 加 perc、15 只留 pad；CDP 实测曲集（30 星存档）：欢乐颂/卡农已解锁、小步舞曲 62.5%、致爱丽丝 41.6%、绿袖子 31.2%、茉莉花 37.5% 四条解锁进度条宽度与门槛一致，点击欢乐颂后 2.6s→4.6s 进度条 14px→25px（≈4.5→8 个音，与 100bpm 相符）、唱片转 3.6s、文案变「停止」；双色关 3-7 与我的页（30/144 星、金唱片 1、伴奏开关）无回归 |
 
 ---
 
@@ -185,6 +193,11 @@
 | 圆形卡分区 | 第 k 圈 2k-1 格，每格是**带缝隙的圆角扇环** | `utils/circleLayout.ts` `buildCircleCells` | 靠 1+3+5+…=n² 正好容纳 size² 个数字；改分区方式要同时确认格子总数仍等于 size²。缝隙宽度见 `gapOf`（随圈厚自适应 0.7~1.5%），圆角用「半径在弧线两端回落」逼近 |
 | 图案卡轮廓 | 12 个形状 = **一条归一化多边形** | `data/patternShapes.json`（由 `scripts/gen-pattern-shapes.js` 生成） | 手写坐标画不出花瓣/齿轮齿/贝壳纹，所以用「圆 / 椭圆 / 胶囊 / 多边形」在生成脚本里拼，烘成轮廓写回 JSON。**改形状只改生成脚本再 `WRITE=1` 重跑，不要手改 JSON**；改完**必须**跑 `node scripts/preview-shapes.js` 确认「连通块=1」+ 各尺寸划分成功 |
 | 图案出场顺序 | `ORDER` 数组决定 12 个图案在卷三 12 关里的先后，与 `DESIGNS` 的定义顺序解耦 | `scripts/gen-pattern-shapes.js` 顶部 | 顺序必须与尺寸阶梯配对：下标 0/6 落 3×3、1/7 落 4×4……5/11 落 8×8。**小尺寸配整体性强的简单轮廓**（水滴 / 四角星），大尺寸才配细碎造型（齿轮 / 八角花）——3×3 只有 9 个大格子，配齿轮会把齿全吃掉。`ORDER` 与 `DESIGNS` 长度不等时脚本直接报错，改完必须 `WRITE=1` 重新生成 json |
+| 音频：声部上限 | 旋律 16 / 伴奏 24 | `services/audio.ts` | 两个池**分开淘汰**。合成一个池（旧版 10 声部）时伴奏和弦会把旋律音挤掉，表现是「和弦响了、旋律断了」 |
+| 音频：调度参数 | tick 30ms / lookahead 0.25s / 起播留白 0.15s | `services/audio.ts` | **墙钟决定「排哪些事件」，音频时钟决定「何时响」**。反过来用 `ctx.currentTime` 算 horizon，上下文被挂起时会死锁（currentTime 冻结 → 整首卡在第一个音）。lookahead 调小会让低端机漏拍 |
+| 音频：和声验收 | 强拍冲突 = 0（1/6/11 半音） | `scripts/analyze-songs.js` | 改口径等于改验收线。九度/十一度/十三度算色彩音、不报；弱拍上的冲突算经过音、只记不判 |
+| 音频：相似度阈值 | 连续 8 个音程 | `scripts/audio-similarity.js` | 8 音大约是一句能被认出来的长度；调到 6 会天天报警，调到 10 以上会漏掉真正的撞句 |
+| 名曲解锁门槛 | 24 / 48 / 72 / 96 星、1 张金唱片、8 关 S | `data/classics.ts` 各曲 `unlock` | 全部由存档现算（`utils/classics.ts`），**不新增存档字段**；上限是 `MAX_STARS = 144`，门槛别写超过它 |
 | 图案轮廓算法 | 追踪 72 格掩膜 → Chaikin×2 → DP 容差 0.012 | `utils/silhouette.ts` | **起点只能旋转不能排序**：排序会打乱边界顺序、平滑后轮廓就废了（这正是历史上「形状一直不对」的根因） |
 | 图案分格算法 | 距离场过滤「厚处」→ 最远点采样 → Lloyd 松弛×3 → 多源 BFS 划分 | `utils/silhouette.ts` | 用 BFS 而不是「最近格心」，因为欧氏 Voronoi 在凹形处会把同一格拆成两块；分格分辨率 96，松弛 72。`SEED_CLEARANCE` 保证花瓣尖/齿轮齿这类细长处不落格心（否则会切出放不下数字的碎片格），细长形状不够就逐级放宽 |
 | 图案线条层 | 一张 SVG data URI：图案面 + 外轮廓（`PATTERN_OUTLINE_WIDTH = 0.85`）+ 唯一分割线（`PATTERN_LINE_WIDTH = 0.36`），单位是 viewBox 的 100 | `utils/silhouette.ts` 的 `buildPatternInk` + `GameGrid` 的 `.patternInk` | 线**不再由格子内缩露底色产生**，而是独立画一遍：`stroke-width` 统一 → 线宽绝对均匀。分割线来自 `buildSeamPolylines`（直接读像素归属，每条内部边只出现一次）。**千万不要改回「每格各画一遍多边形」**：相邻两格各自简化过，同一条边会描成两条错开的线，立刻退回「一堆小卡片」 |
@@ -361,6 +374,7 @@ settings{ sound, music, haptics, colorful, timbre }
 
 | 日期 | 变更 | 验证 |
 | --- | --- | --- |
+| 2026-10-30 | **音频系统重做**（用户四条需求：音符对不对 / 曲集加伴奏 / 版权风险 / 加公有领域名曲）：① **修音** —— `gen-songs.js` 的调性表从「只按主音查」改为 `(root, mode)` 双键（原来 `齿轮` 是 d 小调却标成「D 大调」、`夜航` 是 e 小调却标成「E 大调」）；B 段和声错位是本轮最严重的 bug —— 旋律按 `prog.reverse()` 写、和弦轨却仍用正序，bar 8–11 每个强拍都落在别的和弦上，改为 `progAt(prog, bar)` 让两者共用同一份分段进行；新增 `removeFriction` 消掉与和弦根音构成 1/6/11 半音的三类冲突（九度/十一度/十三度作为色彩音保留，全吸附到三和弦会让旋律变木）；低音轨从「每小节重复根音」改为走动低音（根–五–根–三）。② **双色关旋律缺音** —— `getNoteForValue` 两条轨共用一个下标，偶数格把旋律的下标也推走了，旋律第 2/4/6… 个音永不响；改为奇偶各自独立指针后是连续 32 音。③ **伴奏引擎** —— 新建 `services/accompaniment.ts`（只算数据：低音/铺底/琶音/轻击四声部 + 分段动态），`audio.ts` 拆出 `scheduleVoice` 与两条总线（旋律 0.90 / 伴奏 0.55 → 低通 → 同一限幅器），旋律与伴奏走同一个 lookahead 循环、全部用 `osc.start(when)` 绝对时间；**调度改用墙钟决定「排哪些事件」**，因为用 `ctx.currentTime` 算 horizon 在上下文被挂起时会死锁（currentTime 冻结 → 整首卡在第一个音）；伴奏按 `barTimes[b] = noteTimes[b*4]` 跟随玩家击键、**不做量化**。④ **名曲** —— 新增 `data/classics.ts`（欢乐颂/小步舞曲/致爱丽丝/卡农/绿袖子/茉莉花，自行记谱编配）与 `utils/classics.ts`（解锁只认战绩：24/48/72/96 星、1 张金唱片、8 关 S，全部由存档现算、不新增字段），曲集页下方加「名曲拾遗」区块；名曲只进曲集、不进关卡（进关卡要重算 `starGate` 与 `MAX_STARS=144` 的曲线）。⑤ **版权治理** —— `docs/audio-license.md` 记资产清单/生成参数/判定依据/红线，`scripts/audio-similarity.js` 用音程串（移调不变量）做最长公共子串比对、阈值 8 音。⑥ **顺带清理** —— 曲集的 `TIER_LABELS` 写死「八音盒/钢琴/电钢」但 s3a 其实是钢琴、回放还用的是用户设置音色，改为由 `song.style` 派生并在回放时临时切音色；旋律/伴奏声部分池（16/24）互不抢占；「安可曲 + 音符碎片」占位整体移除（`fragments` 与 `addFragments` 从存档删掉，我的页那一列改为金唱片），存档升 v5 加 `settings.accompaniment` | `tsc --noEmit` + `build:h5` 通过；`analyze-songs.js` 原创 6 首强拍冲突 0、名曲 6 首强拍冲突 0；`audio-similarity.js` 12 首全部 PASS；CDP 实测见 §3.3 |
 | 2026-10-30 | **代码清理 + 文档拆分**（用户要求「删除无用代码、补充对应的 md 文档、拆分 readme 到 game.md、readme 只留技术开发相关」）：① 删掉 6 个完全无引用的导出 —— `services/audio.ts` 的 `getTimbre`、`store/useSaveStore.ts` 的 `selectTotalStars`、`utils/format.ts` 的 `formatRecordTime` / `isToday` / `todayKey`（连带整个 `dayjs` import，该文件只剩 `formatSeconds`）、`utils/music.ts` 的 `getPlayableNoteCount` / `midiToName`；② 收敛 5 处纯内部 `export` —— `levels.ts` 的 `GUIDE_LEVEL_ID`、`audio.ts` 的 `playChord`、`music.ts` 的 `getSongStep`、`silhouette.ts` 的 `getShapeOutline` / `toClipPolygon`；③ **刻意保留** `PatternShape` / `ShapePoint` / `SilhouetteCell` / `SaveState` / `GamePhase` / `CircleCellGeometry` / `GameEngineApi` / `PlaySongOptions` 的 `export` —— 它们出现在导出函数签名或 store 泛型里，取消导出会让公开 API 出现「无法命名的类型」，属于倒退；④ 删除孤立脚本 `scripts/convert-svg-to-png.js`（一次性任务已完成，`gen-tabbar-icons.js` 已覆盖）、`scripts/analyze-ref3.py`（一次性参考图分析），删除 `src/assets/tabbar/` 下 6 个未被引用的 `.svg`（`app.config.ts` 只用 PNG，留着容易被误当成图标源）；⑤ **文档拆分**：新建 `docs/game.md`（规则 / 卷位与卡片造型 / 星级规则 / 关卡数值表 / 功能状态 / 里程碑 / 玩家常见问题），`README.md` 只留技术栈、快速开始、部署、其他命令、开发流程、目录结构、架构与核心机制、常见改动指引、已知限制；⑥ 顺带修正 README 里三处过时内容 —— 关卡数值表更新为 `SIZE_THRESHOLDS` 的 5/8、10/15、22/32、38/55、58/82、82/115 秒与限时 12/17/37/63/94/132 秒，「已点数字只淡成墨灰」改为「只落一枚 ♪、底色与数字色都不变」，「限时 = 2 星线 × 1.5」改为 ×1.15（3×3 例外），收紧系数由「最低 70%」改为实际最紧的 85%（3 卷 × 2 轮 = 6 轮 × 3%）；⑦ `AGENTS.md` §4 新增「图案出场顺序」常量行（`ORDER` 与尺寸阶梯的配对约束），§10 文档索引补 `docs/game.md` 与三份文档的分工说明，§2 修正「星星总数是 select 出来的」的过时说法 | `npx tsc --noEmit` 通过（删除后无残留引用）；全项目 grep 确认 6 个删除项无任何调用点、`.svg` 无任何引用；`npm run build:h5` 通过 |
 | 2026-10-30 | **图案卡改「图案面 + 独立线条层」**（用户反馈「直接把不规则的图案用线进行分割，上面填数字即可，不要现在一堆小卡片的样式」）：① 线不再由「格子内缩露底色」产生——那种做法的每条线都是某一格的边框，两格各让一半，缝宽随格子瘦长程度在 3~20rpx 之间乱跳，格子又是一块有底色的小多边形，所以怎么调都像「一堆小卡片」；② 新增 `buildPatternInk`：把图案面、外轮廓、所有分割线画进**一张 SVG data URI**，`stroke-width` 统一（格线 0.36、轮廓 0.85，单位是 viewBox 的 100），由 `GameGrid` 的 `.patternInk` 铺满整卡；③ 新增 `buildSeamPolylines`：直接读像素归属提边（每条内部边只出现一次）→ DP 拉直 → Chaikin 抹圆，解决「两格各画一遍会变成双线」；④ `GridCell` 新增 `ghost` 态：格子完全透明，只剩点击热区与数字，`.cell.ghost` 压过 `.tone1~6` 的底色（彩色/双色关在图案卡上只改数字颜色）；⑤ 删掉 `CELL_INSET` / `MIN_SHRINK` / `insetPolygon` / `LAYOUT_SCALE`，图案卡不再有「缝」这个概念；⑥ `CELL_SIMPLIFY_FACTOR` 0.09→0.018，格线在交汇处更贴合 | `tsc --noEmit` 通过；`preview-shapes.js` 12 图案 × 3~8 共 72 组合全部划分成功；`preview-cards.js` 截图核对：8×8 五瓣花、5×5 八角花/十字花/四角星都是**单线、等宽、连续**，图案是「一整块面 + 线 + 数字」，真机尺寸（750px 宽）下无卡片感 |
 | 2026-10-30 | **图案卡改「细线稿」**（用户反馈「数字之间不要使用卡片和间隔，直接展示数字和线条间隔」「图案很不流畅」）：① `CELL_INSET` 0.007→**0.002**（缝宽 9.6rpx→2.7rpx，两格各缩一次所以缝 = 2×CELL_INSET），`LAYOUT_SCALE` 0.955→**0.988**（描边 15rpx→4rpx，仍比格线粗一档）；② 线色 `$color-pattern-line` `#e3d5bd`→**`#cfbc9e`**（线只有 1.3px 宽，原来的浅纸褐会淡到看不见）；③ 效果：整张卡从「白块拼贴的马赛克」变成「一块完整图案上画了细线」，图案轮廓与内部网格的关系终于对了；④ 顺手修 `preview-cards.js` 的方形卡：`border: 2rpx` 在纯 CSS 预览页是**非法单位、整条声明被浏览器丢弃**，导致截图里格子边框全无、♪ 看着像悬空，改用 px | `tsc --noEmit` 通过；`preview-shapes.js` 12 图案 × 3~8 共 72 组合仍全部划分成功、连通块=1；`preview-cards.js` 截图核对：水滴/心形/叶片/云朵 5×5 轮廓一眼可辨且内部只有细线，六角星 8×8 64 格线宽均匀，方形卡边框与 ♪ 位置正常 |
@@ -394,6 +408,8 @@ settings{ sound, music, haptics, colorful, timbre }
 | `AGENTS.md`（本文） | 面向「续写者」的规范与进度台账 |
 | `docs/game-design.md` | 游戏大纲：模块、关卡、通关规则、奖励、留存设计 |
 | `docs/design-v2.md` | v2 视觉与音乐系统改版方案与决策记录 |
+| `docs/audio-system-design.md` | 音频系统设计方案：现状体检数据、四个问题的诊断与修法、伴奏架构、名曲与解锁、实施计划 |
+| `docs/audio-license.md` | 音频资产与版权说明：清单、生成参数、公有领域判定依据、红线、验收命令 |
 | `docs/tech-plan.md` | 技术方案：选型、分层、核心模块设计、扩展性 |
 
 > **文档分工**：玩法与数值写 `docs/game.md`，技术实现写 `README.md`，续写约束与决策写 `AGENTS.md`。改数值时三处都要核对 —— `game.md` 的表格、`README.md` 的「常见改动指引」、本文 §4 的常量联动表。

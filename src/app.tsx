@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useSaveStore } from '@/store/useSaveStore';
-import { setMusicEnabled, setSoundEnabled, setTimbre } from '@/services/audio';
+import { setAccompanimentEnabled, setMusicEnabled, setSoundEnabled, setTimbre } from '@/services/audio';
 import { setHapticsEnabled } from '@/services/haptics';
 import { GameSettings } from '@/types/game';
 // 全局样式
@@ -11,6 +11,7 @@ function App(props) {
     const applySettings = (settings: GameSettings) => {
       setSoundEnabled(settings.sound);
       setMusicEnabled(settings.music);
+      setAccompanimentEnabled(settings.accompaniment);
       setTimbre(settings.timbre);
       setHapticsEnabled(settings.haptics);
     };

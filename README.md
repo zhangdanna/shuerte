@@ -267,14 +267,18 @@ bestRuns     关卡 id → 最好那一次的 { stars, elapsed, errors, beats[] 
 totalGames / streakDays / lastPlayedDate
 recent       最近 10 条成绩（仍记录，页面暂不展示，留给后续成就 / 分享）
 tutorialDone 引子是否已通（老存档按「玩过」自动补齐）
-settings     { sound, music, haptics, colorful, timbre }
+settings     { sound, music, accompaniment, haptics, colorful, timbre }
 ```
 
 > 成绩只升不降：星级更高、同星级用时更短、再比失误少，才会覆盖 `bestRuns`。打崩了不会冲掉最好记录，所以可以放心反复重玩。
 
 **音效实现**：4 个音效由 `scripts/gen-sounds.js` 用 Node 合成 WAV（正弦波 + 包络），内联为 base64 写入 `src/data/sounds.ts`，因此项目不依赖任何外部音频文件。H5 端直接播放 data URI；小程序端 `InnerAudioContext` 不支持 data URI，会把 base64 落地到 `USER_DATA_PATH` 再播放。
 
-**演奏音实现**：`services/audio.ts` 用 WebAudio 实时合成（3 种音色的包络 / 谐波参数），不占用任何音频资源；音高由 `utils/music.ts` 从「数字 → 乐谱位置」映射而来，倒序关只反排数字不反排乐谱，所以听感始终是正着走的旋律。
+**演奏音实现**：`services/audio.ts` 用 WebAudio 实时合成（3 种音色的包络 / 谐波参数），不占用任何音频资源；音高由 `utils/music.ts` 从「数字 → 乐谱位置」映射而来，倒序关只反排数字不反排乐谱，所以听感始终是正着走的旋律。双色关的旋律轨与低音轨**各有各的指针**——共用一个下标会让旋律每隔一个音就断一次。
+
+**伴奏实现**：`services/accompaniment.ts` 只算数据（低音 / 铺底 / 琶音 / 轻击四个声部的相对偏移与包络），排程由 `audio.ts` 的 `scheduleVoice` 完成，两条总线（旋律 0.90 / 伴奏 0.55）汇进同一个限幅器。回放时旋律与伴奏走**同一个 lookahead 循环**，时间轴由 `barTimes[b] = noteTimes[b * 4]` 对齐到玩家的真实击键节奏，不做量化——量化会让「回放我的演奏」变成「另一个人弹的」。
+
+> 调度用**墙钟**决定「该排哪些事件」，用 `ctx.currentTime` 决定「什么时候响」。反过来用音频时钟算 horizon，在上下文被挂起时会死锁（`currentTime` 冻结，整首曲子卡在第一个音）。
 
 > Taro H5 的 Storage 是双层包装：`localStorage[key] = JSON.stringify({ data: JSON.stringify(save) })`，写种子存档脚本时注意这一层。
 

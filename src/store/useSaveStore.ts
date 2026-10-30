@@ -7,8 +7,8 @@ import { SAVE_STORAGE_KEY, taroStorage } from '@/services/storage';
 /** 最近成绩保留条数 */
 const RECENT_LIMIT = 10;
 
-/** 存档版本：v2 起增加演奏评级、音符碎片与新的设置项；v3 增加指引关进度；v4 增加「最好那一次」的击键记录 */
-const SAVE_VERSION = 4;
+/** 存档版本：v2 起增加演奏评级、音符碎片与新的设置项；v3 增加指引关进度；v4 增加「最好那一次」的击键记录；v5 增加伴奏开关 */
+const SAVE_VERSION = 5;
 
 export interface SaveState {
   /** 关卡 id → 最高星级 */
@@ -21,8 +21,6 @@ export interface SaveState {
   grades: Record<string, PerformanceGrade>;
   /** 关卡 id → 最好的一次演奏（含击键节奏），供曲集回放 */
   bestRuns: Record<string, BestRun>;
-  /** 音符碎片：每日一曲产出，攒够可换隐藏曲 */
-  fragments: number;
   /** 指引关（引子）是否已通过：未通过时主线第一关不开 */
   tutorialDone: boolean;
   totalGames: number;
@@ -32,7 +30,6 @@ export interface SaveState {
   settings: GameSettings;
   submitResult: (result: GameResult, grade?: PerformanceGrade, beats?: number[]) => void;
   setSetting: <K extends keyof GameSettings>(key: K, value: GameSettings[K]) => void;
-  addFragments: (count: number) => void;
   /** 指引关通关：只记一个标记，不发星、不写成绩 */
   completeTutorial: () => void;
   resetAll: () => void;
@@ -41,6 +38,7 @@ export interface SaveState {
 const defaultSettings: GameSettings = {
   sound: true,
   music: true,
+  accompaniment: true,
   haptics: true,
   colorful: false,
   timbre: 'piano'
@@ -52,7 +50,6 @@ const initialData = {
   bestErrors: {} as Record<string, number>,
   grades: {} as Record<string, PerformanceGrade>,
   bestRuns: {} as Record<string, BestRun>,
-  fragments: 0,
   tutorialDone: false,
   totalGames: 0,
   streakDays: 0,
@@ -144,7 +141,6 @@ export const useSaveStore = create<SaveState>()(
         });
       },
       setSetting: (key, value) => set((state) => ({ settings: { ...state.settings, [key]: value } })),
-      addFragments: (count) => set((state) => ({ fragments: Math.max(0, state.fragments + count) })),
       completeTutorial: () => set({ tutorialDone: true }),
       resetAll: () => set({ ...initialData, settings: get().settings })
     }),
@@ -161,7 +157,6 @@ export const useSaveStore = create<SaveState>()(
             ...initialData,
             ...state,
             grades: state.grades ?? {},
-            fragments: state.fragments ?? 0,
             tutorialDone: state.tutorialDone ?? legacyPlayed,
             // v4 之前没有击键记录：老存档的空着即可，回放会退回「原曲」
             bestRuns: state.bestRuns ?? {},

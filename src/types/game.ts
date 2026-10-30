@@ -69,6 +69,22 @@ export interface Performance {
   grade: PerformanceGrade;
 }
 
+/** 名曲解锁条件：只认战绩，不认付费/时间 */
+export type ClassicUnlock =
+  | { kind: 'stars'; value: number }
+  | { kind: 'gold'; value: number }
+  | { kind: 'grade'; grade: 'S'; value: number };
+
+/**
+ * 名曲：公有领域作品的自行记谱与编配。
+ * 与 SongConfig 的区别只有两点 —— 不绑定关卡（不进 LEVELS），多一个解锁条件。
+ */
+export interface ClassicSong extends SongConfig {
+  /** 原作署名，如「贝多芬 · 1824」 */
+  composer: string;
+  unlock: ClassicUnlock;
+}
+
 /** 关卡配置 */
 export interface LevelConfig {
   id: string;
@@ -174,6 +190,8 @@ export interface GameSettings {
   sound: boolean;
   /** 演奏音（点对时弹出的音符） */
   music: boolean;
+  /** 伴奏（曲集回放时的低音 / 铺底 / 琶音） */
+  accompaniment: boolean;
   haptics: boolean;
   /** 亲子模式：格子按 6 色循环上色（默认关闭，保持纸面单色） */
   colorful: boolean;

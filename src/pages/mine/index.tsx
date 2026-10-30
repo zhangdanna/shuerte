@@ -4,6 +4,7 @@ import { View, Text, Switch } from '@tarojs/components';
 import classnames from 'classnames';
 import { useSaveStore } from '@/store/useSaveStore';
 import { LEVELS, MAX_STARS } from '@/data/levels';
+import { countGoldRecords } from '@/utils/classics';
 import { TimbreKey } from '@/types/game';
 import styles from './index.module.scss';
 
@@ -16,10 +17,11 @@ const TIMBRES: Array<{ key: TimbreKey; label: string }> = [
 const TOTAL_LEVELS = LEVELS.length;
 
 export default function MinePage() {
-  const { stars, totalGames, streakDays, fragments, settings, setSetting, resetAll } = useSaveStore();
+  const { stars, totalGames, streakDays, settings, setSetting, resetAll } = useSaveStore();
 
   const totalStars = Object.values(stars).reduce((sum, s) => sum + s, 0);
   const clearedLevels = Object.values(stars).filter((s) => s > 0).length;
+  const goldRecords = countGoldRecords(stars);
 
   const handleReset = useCallback(() => {
     Taro.showModal({
@@ -75,8 +77,8 @@ export default function MinePage() {
           </View>
           <View className={styles.statDivider} />
           <View className={styles.statItem}>
-            <Text className={styles.statValue}>{fragments}</Text>
-            <Text className={styles.statLabel}>音符碎片</Text>
+            <Text className={styles.statValue}>{goldRecords}</Text>
+            <Text className={styles.statLabel}>金唱片</Text>
           </View>
         </View>
       </View>
@@ -93,6 +95,17 @@ export default function MinePage() {
             <Switch
               checked={settings.music}
               onChange={() => setSetting('music', !settings.music)}
+              color="#e85d2a"
+            />
+          </View>
+          <View className={styles.settingItem}>
+            <View className={styles.settingMeta}>
+              <Text className={styles.settingLabel}>伴奏</Text>
+              <Text className={styles.settingDesc}>曲集回放时的低音、和声与琶音</Text>
+            </View>
+            <Switch
+              checked={settings.accompaniment}
+              onChange={() => setSetting('accompaniment', !settings.accompaniment)}
               color="#e85d2a"
             />
           </View>

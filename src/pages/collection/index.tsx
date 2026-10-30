@@ -5,21 +5,28 @@ import classnames from 'classnames';
 import Disc from '@/components/Disc';
 import { LEVELS } from '@/data/levels';
 import { SONGS } from '@/data/songs';
+import { CLASSICS } from '@/data/classics';
 import { useSaveStore } from '@/store/useSaveStore';
 import { isSongReachable } from '@/utils/progress';
 import { SongBeats, pickSongBeats } from '@/utils/beats';
+import { getClassicProgress } from '@/utils/classics';
 import { playSong, stopAllNotes } from '@/services/audio';
 import { GRADE_LABELS } from '@/utils/scoring';
-import { PerformanceGrade } from '@/types/game';
+import { ClassicSong, PerformanceGrade, SongConfig, TimbreKey } from '@/types/game';
 import styles from './index.module.scss';
-
-/** 隐藏曲需要的音符碎片 */
-const ENCORE_FRAGMENTS = 10;
 
 /** 曲目序号：曲集按收录顺序排，用汉字序号更像一本谱册 */
 const NUMERALS = ['壹', '贰', '叁', '肆', '伍', '陆', '柒'];
+const CLASSIC_NUMERALS = ['一', '二', '三', '四', '五', '六'];
 
-const TIER_LABELS: Record<number, string> = { 1: '小令 · 八音盒', 2: '中调 · 钢琴', 3: '长调 · 电钢' };
+const TIER_NAMES: Record<number, string> = { 1: '小令', 2: '中调', 3: '长调' };
+
+/** 音色文案由 song.style 派生 —— 写死在档位上会和实际发声对不上 */
+const STYLE_LABELS: Record<TimbreKey, string> = {
+  musicbox: '八音盒',
+  piano: '钢琴',
+  epiano: '电钢'
+};
 
 const GRADE_ORDER: Record<PerformanceGrade, number> = { S: 4, A: 3, B: 2, C: 1 };
 
@@ -27,8 +34,7 @@ interface RecordItem {
   id: string;
   numeral: string;
   title: string;
-  tier: number;
-  bpm: number;
+  meta: string;
   total: number;
   collected: number;
   maxStars: number;
@@ -38,20 +44,21 @@ interface RecordItem {
   reachable: boolean;
   /** 玩家自己的击键记录（没有则回放原曲） */
   beats: SongBeats | null;
-  /** 这首曲子一共多少个音（64），用来判断玩家的记录是否已经覆盖整首 */
-  songTotal: number;
+  song: SongConfig;
 }
 
 const CollectionPage: React.FC = () => {
   const starsMap = useSaveStore((state) => state.stars);
   const grades = useSaveStore((state) => state.grades);
-  const fragments = useSaveStore((state) => state.fragments);
   const bestRuns = useSaveStore((state) => state.bestRuns);
+  const settings = useSaveStore((state) => state.settings);
+  const setSetting = useSaveStore((state) => state.setSetting);
 
   const totalStars = Object.values(starsMap).reduce((sum, value) => sum + value, 0);
 
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [step, setStep] = useState(-1);
+  const [playingTotal, setPlayingTotal] = useState(64);
   const stopRef = useRef<(() => void) | null>(null);
 
   const records = useMemo<RecordItem[]>(
@@ -69,8 +76,7 @@ const CollectionPage: React.FC = () => {
           id: song.id,
           numeral: NUMERALS[index] ?? `${index + 1}`,
           title: song.title,
-          tier: song.tier,
-          bpm: song.bpm,
+          meta: `${TIER_NAMES[song.tier] ?? '曲目'} · ${STYLE_LABELS[song.style] ?? '钢琴'} · ${song.bpm} BPM`,
           total: levels.length,
           collected: levels.filter((level) => (starsMap[level.id] ?? 0) > 0).length,
           maxStars: levels.reduce((sum, level) => sum + level.maxStars, 0),
@@ -78,10 +84,20 @@ const CollectionPage: React.FC = () => {
           grade,
           reachable: isSongReachable(levels, starsMap, totalStars),
           beats: pickSongBeats(levels, bestRuns),
-          songTotal: song.melody.length
+          song
         };
       }),
     [starsMap, grades, totalStars, bestRuns]
+  );
+
+  const classics = useMemo(
+    () =>
+      CLASSICS.map((song: ClassicSong, index) => ({
+        song,
+        numeral: CLASSIC_NUMERALS[index] ?? `${index + 1}`,
+        progress: getClassicProgress(song, { stars: starsMap, grades })
+      })),
+    [starsMap, grades]
   );
 
   const stop = () => {
@@ -91,7 +107,7 @@ const CollectionPage: React.FC = () => {
     setStep(-1);
   };
 
-  // 离开页面必须停掉定时器，否则回放会在后台一直跑
+  // 离开页面必须停掉调度循环，否则回放会在后台一直跑
   useUnload(() => {
     stopRef.current?.();
     stopAllNotes();
@@ -107,28 +123,18 @@ const CollectionPage: React.FC = () => {
     []
   );
 
-  const handlePlay = (record: RecordItem) => {
-    if (!record.reachable) {
-      Taro.showToast({ title: '先通关上一首，这一首才开卷', icon: 'none' });
-      return;
-    }
-    if (record.collected === 0) {
-      Taro.showToast({ title: '先通关这首曲子的任意一段', icon: 'none' });
-      return;
-    }
-    if (playingId === record.id) {
+  const startPlay = (song: SongConfig, beats?: number[]) => {
+    if (playingId === song.id) {
       stop();
       return;
     }
     stop();
-    const song = SONGS.find((item) => item.id === record.id);
-    if (!song) {
-      return;
-    }
-    setPlayingId(record.id);
+    setPlayingId(song.id);
+    setPlayingTotal(song.melody.length);
+    setStep(0);
     stopRef.current = playSong(song, {
       // 有击键记录就按玩家自己的快慢播（这是「我的演奏」）；没有则按曲目 BPM 播原曲
-      beats: record.beats?.beats,
+      beats,
       onStep: (index) => {
         if (index < 0) {
           setPlayingId(null);
@@ -140,18 +146,52 @@ const CollectionPage: React.FC = () => {
     });
   };
 
+  const handlePlayRecord = (record: RecordItem) => {
+    if (!record.reachable) {
+      Taro.showToast({ title: '先通关上一首，这一首才开卷', icon: 'none' });
+      return;
+    }
+    if (record.collected === 0) {
+      Taro.showToast({ title: '先通关这首曲子的任意一段', icon: 'none' });
+      return;
+    }
+    startPlay(record.song, record.beats?.beats);
+  };
+
+  const handlePlayClassic = (item: {
+    song: ClassicSong;
+    progress: { unlocked: boolean; label: string; target: number };
+  }) => {
+    if (!item.progress.unlocked) {
+      Taro.showToast({ title: `还差一点：${item.progress.label} ${item.progress.target}`, icon: 'none' });
+      return;
+    }
+    startPlay(item.song);
+  };
+
   const totalCollected = records.filter((record) => record.collected > 0).length;
   const goldCount = records.filter(
     (record) => record.collected === record.total && record.stars >= record.maxStars
   ).length;
+  const unlockedClassics = classics.filter((item) => item.progress.unlocked).length;
 
   return (
     <View className={styles.page}>
-      <View className={styles.header}>
-        <Text className={styles.title}>曲集</Text>
-        <Text className={styles.subtitle}>
-          已收录 {totalCollected} / {records.length} 首 · 金唱片 {goldCount} 张
-        </Text>
+      <View className={styles.headerRow}>
+        <View className={styles.header}>
+          <Text className={styles.title}>曲集</Text>
+          <Text className={styles.subtitle}>
+            已收录 {totalCollected} / {records.length} 首 · 金唱片 {goldCount} 张
+          </Text>
+        </View>
+        <View
+          className={classnames(styles.accompChip, settings.accompaniment && styles.accompChipOn)}
+          onClick={() => setSetting('accompaniment', !settings.accompaniment)}
+        >
+          <Text className={classnames(styles.accompText, settings.accompaniment && styles.accompTextOn)}>
+            伴奏 {settings.accompaniment ? '开' : '关'}
+          </Text>
+        </View>
       </View>
 
       <View className={styles.list}>
@@ -159,7 +199,7 @@ const CollectionPage: React.FC = () => {
           const complete = record.collected === record.total;
           const gold = complete && record.stars >= record.maxStars;
           const playing = playingId === record.id;
-          const progress = playing && step >= 0 ? ((step + 1) / record.songTotal) * 100 : 0;
+          const progress = playing && step >= 0 ? ((step + 1) / playingTotal) * 100 : 0;
           return (
             <View
               key={record.id}
@@ -169,7 +209,7 @@ const CollectionPage: React.FC = () => {
                 gold && styles.recordGold,
                 playing && styles.recordPlaying
               )}
-              onClick={() => handlePlay(record)}
+              onClick={() => handlePlayRecord(record)}
             >
               <View className={styles.discSlot}>
                 <Disc spinning={playing} speed={3.6} gold={gold} />
@@ -182,9 +222,7 @@ const CollectionPage: React.FC = () => {
                   {gold && <Text className={styles.goldTag}>金唱片</Text>}
                   {!gold && complete && <Text className={styles.doneTag}>已收录</Text>}
                 </View>
-                <Text className={styles.recordMeta}>
-                  {TIER_LABELS[record.tier] ?? '曲目'} · {record.bpm} BPM
-                </Text>
+                <Text className={styles.recordMeta}>{record.meta}</Text>
                 <View className={styles.segments}>
                   {Array.from({ length: record.total }, (_, index) => (
                     <View
@@ -215,7 +253,7 @@ const CollectionPage: React.FC = () => {
                 )}
                 <Text className={styles.playHint}>
                   {!record.reachable
-                    ? '先演奏完上一首'
+                    ? '先演奏上一首'
                     : playing
                       ? '停止'
                       : record.collected === 0
@@ -228,39 +266,80 @@ const CollectionPage: React.FC = () => {
             </View>
           );
         })}
+      </View>
 
-        {/* 隐藏曲：给收集留一个可见的"下一件想做的事" */}
-        <View className={classnames(styles.record, styles.recordLocked, styles.encore)}>
-          <View className={styles.discSlot}>
-            <Disc />
-          </View>
-          <View className={styles.info}>
-            <View className={styles.titleRow}>
-              <Text className={styles.numeral}>安</Text>
-              <Text className={styles.recordTitle}>？？？</Text>
-              <Text className={styles.encoreTag}>安可曲</Text>
+      {/* 名曲拾遗：公有领域作品，按战绩解锁 */}
+      <View className={styles.sectionHead}>
+        <Text className={styles.sectionTitle}>名曲拾遗</Text>
+        <Text className={styles.sectionHint}>
+          {unlockedClassics} / {classics.length} 首 · 按战绩解锁
+        </Text>
+      </View>
+
+      <View className={styles.list}>
+        {classics.map((item) => {
+          const { song, progress } = item;
+          const playing = playingId === song.id;
+          const percent = playing && step >= 0 ? ((step + 1) / playingTotal) * 100 : 0;
+          const unlockPercent = Math.min(100, (progress.current / progress.target) * 100);
+          return (
+            <View
+              key={song.id}
+              className={classnames(
+                styles.record,
+                !progress.unlocked && styles.recordLocked,
+                playing && styles.recordPlaying
+              )}
+              onClick={() => handlePlayClassic(item)}
+            >
+              <View className={styles.discSlot}>
+                <Disc spinning={playing} speed={3.6} />
+              </View>
+
+              <View className={styles.info}>
+                <View className={styles.titleRow}>
+                  <Text className={styles.numeral}>{item.numeral}</Text>
+                  <Text className={styles.recordTitle}>{song.title}</Text>
+                  {progress.unlocked ? (
+                    <Text className={styles.classicTag}>名曲</Text>
+                  ) : (
+                    <Text className={styles.encoreTag}>待解锁</Text>
+                  )}
+                </View>
+                <Text className={styles.recordMeta}>
+                  {song.composer} · {STYLE_LABELS[song.style] ?? '钢琴'} · {song.bpm} BPM
+                </Text>
+                {!progress.unlocked && (
+                  <View className={styles.unlockBar}>
+                    <View className={styles.unlockBarFill} style={{ width: `${unlockPercent}%` }} />
+                  </View>
+                )}
+                {playing && (
+                  <View className={styles.progress}>
+                    <View className={styles.progressFill} style={{ width: `${percent}%` }} />
+                  </View>
+                )}
+              </View>
+
+              <View className={styles.right}>
+                {progress.unlocked ? (
+                  <Text className={styles.playHint}>{playing ? '停止' : '播放'}</Text>
+                ) : (
+                  <>
+                    <Text className={styles.lockText}>
+                      {Math.min(progress.current, progress.target)}/{progress.target}
+                    </Text>
+                    <Text className={styles.gradeText}>{progress.label}</Text>
+                  </>
+                )}
+              </View>
             </View>
-            <Text className={styles.recordMeta}>集齐 6 张金唱片，或攒够 {ENCORE_FRAGMENTS} 枚碎片</Text>
-            <View className={styles.segments}>
-              {Array.from({ length: ENCORE_FRAGMENTS }, (_, index) => (
-                <View
-                  key={index}
-                  className={classnames(styles.segment, index < fragments && styles.segmentOn)}
-                />
-              ))}
-            </View>
-          </View>
-          <View className={styles.right}>
-            <Text className={styles.lockText}>
-              {fragments}/{ENCORE_FRAGMENTS}
-            </Text>
-            <Text className={styles.gradeText}>碎片</Text>
-          </View>
-        </View>
+          );
+        })}
       </View>
 
       <Text className={styles.footer}>
-        回放的是你最好那一次的弹奏；还没弹到的音，按原曲续上
+        回放的是你最好那一次的弹奏；名曲按原谱速度演奏，配伴奏
       </Text>
     </View>
   );

@@ -12,6 +12,74 @@
   margin-bottom: $spacing-lg;
 }
 
+// 标题与「伴奏开关」同一行：开关是即时生效的，放在标题旁最容易被找到
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+}
+
+.headerRow .header {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.accompChip {
+  flex: 0 0 auto;
+  margin-top: 8rpx;
+  padding: 6rpx 16rpx;
+  border: 2rpx solid $line;
+  border-radius: $radius-round;
+  background-color: transparent;
+}
+
+.accompChipOn {
+  border-color: rgba(232, 93, 42, 0.5);
+  background-color: rgba(232, 93, 42, 0.07);
+}
+
+.accompText {
+  font-size: 22rpx;
+  color: $ink-400;
+  white-space: nowrap;
+}
+
+.accompTextOn {
+  color: $sunset-deep;
+}
+
+// ============ 分区标题（名曲拾遗） ============
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $spacing-sm;
+  margin: $spacing-xl 0 $spacing-sm;
+}
+
+.sectionTitle {
+  font-family: $font-serif;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $ink-900;
+}
+
+.sectionHint {
+  font-size: $font-size-xs;
+  color: $ink-200;
+}
+
+.classicTag {
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: $radius-round;
+  background-color: rgba(223, 162, 46, 0.14);
+  color: $gold;
+}
+
 .title {
   display: block;
   font-family: $font-serif;
@@ -172,6 +240,21 @@
   height: 100%;
   background-color: $sunset-deep;
   transition: width 0.1s linear;
+}
+
+// 名曲的解锁进度：比回放进度条粗一档，否则 2px 在纸面上几乎看不见
+.unlockBar {
+  margin-top: $spacing-xs;
+  height: 8rpx;
+  border-radius: 4rpx;
+  background-color: $paper-2;
+  overflow: hidden;
+}
+
+.unlockBarFill {
+  height: 100%;
+  border-radius: 4rpx;
+  background-color: rgba(223, 162, 46, 0.55);
 }
 
 // ============ 右侧评级 ============

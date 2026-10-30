@@ -12,15 +12,26 @@ const getSongStep = (level: LevelConfig, value: number): number =>
 
 /**
  * 取该格子对应的音高。
+ *
  * 双色交替关：奇数格走旋律轨、偶数格走低音轨 —— 红色旋律、蓝色伴奏，
- * 交替点击天然就是"双手交替"。
+ * 交替点击天然就是「双手交替」。
+ *
+ * **两条轨必须各有各的指针**。旧实现两条轨共用一个下标（都取 step-1），
+ * 结果偶数格把旋律的下标也一起推走了：旋律的第 2、4、6… 个音永远不响，
+ * 听到的是一条「隔一个音跳一下」的残旋律。现在第 k 次交替（k 从 0 起）
+ * 分别推进旋律与低音，两条线都是连续的。
  */
 export const getNoteForValue = (song: SongConfig, level: LevelConfig, value: number): number => {
+  if (level.mode === 'alternate') {
+    const isMelody = value % 2 === 1;
+    const step = Math.floor((value - 1) / 2);
+    const line = isMelody || song.bass.length === 0 ? song.melody : song.bass;
+    const index = Math.min(Math.max(step, 0), line.length - 1);
+    return line[index] ?? 60;
+  }
   const step = getSongStep(level, value);
-  const useBass = level.mode === 'alternate' && value % 2 === 0 && song.bass.length > 0;
-  const line = useBass ? song.bass : song.melody;
-  const index = Math.min(Math.max(step - 1, 0), line.length - 1);
-  return line[index] ?? 60;
+  const index = Math.min(Math.max(step - 1, 0), song.melody.length - 1);
+  return song.melody[index] ?? 60;
 };
 
 /** 每音一拍的间隔（毫秒）：节奏评级的基准，也是回放速度 */
