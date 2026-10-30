@@ -1,8 +1,8 @@
-# 舒尔特方格闯关小游戏（shuerte）
+# 眼力大作战 · 舒尔特方格闯关小游戏（shuerte）
 
 > 用最短时间按顺序点完 N×N 方格里的数字，逐关进阶的专注力训练小游戏。Taro + React 多端项目，主发微信小程序，同时可编译为 H5 预览与传播。
 
-**当前版本 v2.1 ·「乐谱纸 · 墨水与暖光」古风改版。** 玩法、关卡数值、星级规则、功能状态与里程碑见 **[`docs/game.md`](./docs/game.md)**；本文只讲技术栈、构建部署、架构与改动指引。
+**当前版本 v2 ·「乐谱纸 · 墨水与暖光」古风改版，音乐系统（原创曲库 + 四声部伴奏 + 名曲拾遗）已完整落地。** 玩法、关卡数值、星级规则、功能状态、里程碑与宣传话术见 **[`docs/game.md`](./docs/game.md)**；本文只讲技术栈、构建部署、架构与改动指引。
 
 ---
 
@@ -171,6 +171,13 @@ node scripts/gen-sounds.js
 # 重新生成曲库（改 SPECS / HOOKS 后执行）
 node scripts/gen-songs.js
 
+# 和声体检（改动曲库后必跑，强拍冲突必须为 0）
+node scripts/analyze-songs.js          # 原创 6 首
+node scripts/analyze-songs.js classics # 名曲 6 首
+
+# 旋律相似度自查（改动旋律后必跑，连续 ≥8 音重合即报警）
+node scripts/audio-similarity.js
+
 # 重新生成 tabBar 图标（微信只支持 PNG）
 node scripts/gen-tabbar-icons.js
 
@@ -208,11 +215,13 @@ node scripts/cdp-shot.js "http://127.0.0.1:8899/#/pages/home/index" shot.png --w
 shuerte/
 ├── AGENTS.md                  # AI 续写规范 + 模块进度台账（续写前先读）
 ├── docs/
-│   ├── game.md                # 玩法文档：规则 / 关卡数值 / 星级 / 功能状态 / 里程碑
-│   ├── game-design.md         # 早期游戏大纲
-│   ├── design-v2.md           # v2 视觉与音乐系统方案
+│   ├── game.md                # 玩法文档：游戏介绍 / 规则 / 星级 / 数值表 / 宣传话术
+│   ├── game-design.md         # 早期游戏设计大纲
+│   ├── design-v2.md           # v2 视觉与音乐系统改版方案
+│   ├── audio-system-design.md # 音频系统设计方案（修音 / 伴奏 / 名曲）
+│   ├── audio-license.md       # 音频资产与版权说明
 │   └── tech-plan.md           # 技术方案
-├── scripts/                   # 生成与自检脚本（音效 / 曲库 / 图案 / 图标 / 预览 / 截图）
+├── scripts/                   # 生成与自检脚本（音效 / 曲库 / 体检 / 相似度 / 图案 / 图标 / 预览 / 截图）
 └── src/
     ├── app.config.ts          # 页面注册 + tabBar
     ├── app.tsx                # 启动时同步「音效 / 震动」设置到服务层
@@ -226,10 +235,10 @@ shuerte/
     │   └── rank/              # 排行榜（占位）
     ├── components/            # GameGrid / GridCell / TimerRing / StarRating / LevelCard / Disc
     ├── hooks/useGameEngine.ts # 引擎状态机 + 副作用编排
-    ├── utils/                 # gameEngine / circleLayout / silhouette / scoring / progress / shuffle / music / beats / format（纯函数）
-    ├── services/              # audio / haptics / storage（平台能力封装）
+    ├── utils/                 # gameEngine / circleLayout / silhouette / scoring / progress / shuffle / music / beats / format / classics（纯函数）
+    ├── services/              # audio / accompaniment / haptics / storage（平台能力封装）
     ├── store/useSaveStore.ts  # 存档 + 设置
-    ├── data/                  # levels.ts（关卡蓝图与阈值表）、patternShapes.json（12 个图案的归一化多边形）、songs.ts、sounds.ts（生成文件）
+    ├── data/                  # levels.ts（关卡蓝图与阈值表）、patternShapes.json（12 个图案的归一化多边形）、songs.ts、classics.ts、sounds.ts（生成文件）
     ├── styles/                # theme.scss（配色与格子色板）、variables.scss（间距 / 圆角 / 字体）
     └── assets/tabbar/         # tabBar 图标（仅 PNG）
 ```
@@ -263,6 +272,7 @@ shuerte/
 stars        关卡 id → 最高星级
 bestTimes    关卡 id → 最佳用时（ms）
 bestErrors   关卡 id → 最少失误
+grades       关卡 id → 最好的一次演奏评级（S/A/B/C，仅供曲集光效与成就，不计入星级）
 bestRuns     关卡 id → 最好那一次的 { stars, elapsed, errors, beats[] }（beats 是击键节奏，供曲集回放）
 totalGames / streakDays / lastPlayedDate
 recent       最近 10 条成绩（仍记录，页面暂不展示，留给后续成就 / 分享）
@@ -326,9 +336,11 @@ settings     { sound, music, accompaniment, haptics, colorful, timbre }
 
 | 文档 | 内容 |
 | --- | --- |
-| [`docs/game.md`](./docs/game.md) | **玩法文档**：规则、卷位与卡片造型、星级规则、关卡数值表、功能状态、里程碑、玩家可能遇到的问题 |
+| [`docs/game.md`](./docs/game.md) | **玩法文档（玩家向）**：游戏介绍、规则、卷位与卡片造型、音乐系统、星级规则、关卡数值表、功能状态、里程碑、玩家常见问题、宣传话术 |
 | [`AGENTS.md`](./AGENTS.md) | 续写规范与进度台账：分层职责、模块进度、常量联动、编码规范、改动指引、自查清单、决策记录 |
-| [`docs/game-design.md`](./docs/game-design.md) | 早期游戏大纲：游戏模块、关卡设计、通关规则、奖励机制、留存设计、新手 60 秒脚本 |
+| [`docs/game-design.md`](./docs/game-design.md) | 早期游戏设计大纲：产品定位、游戏模块、关卡设计、通关规则、奖励机制、留存设计、新手体验脚本 |
 | [`docs/design-v2.md`](./docs/design-v2.md) | v2 视觉与音乐系统改版方案与决策记录 |
-| [`docs/tech-plan.md`](./docs/tech-plan.md) | 技术方案：选型、目录分层、核心模块设计、性能与扩展性、里程碑 |
+| [`docs/audio-system-design.md`](./docs/audio-system-design.md) | 音频系统设计方案：修音诊断、伴奏架构、名曲与解锁、实施计划 |
+| [`docs/audio-license.md`](./docs/audio-license.md) | 音频资产与版权说明：资产清单、生成参数、公有领域判定依据、红线、验收命令 |
+| [`docs/tech-plan.md`](./docs/tech-plan.md) | 技术方案（早期）：选型、目录分层、核心模块设计、性能与扩展性、里程碑 |
 
