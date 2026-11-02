@@ -2,7 +2,7 @@
 
 > 用最短时间按顺序点完 N×N 方格里的数字，逐关进阶的专注力训练小游戏。Taro + React 多端项目，主发微信小程序，同时可编译为 H5 预览与传播。
 
-**当前版本 v2 ·「乐谱纸 · 墨水与暖光」古风改版，音乐系统（原创曲库 + 四声部伴奏 + 名曲拾遗）已完整落地。** 玩法、关卡数值、星级规则、功能状态、里程碑与宣传话术见 **[`docs/game.md`](./docs/game.md)**；本文只讲技术栈、构建部署、架构与改动指引。
+**当前版本 v2 ·「乐谱纸 · 墨水与暖光」古风改版，音乐系统（原创曲库 + 四声部伴奏 + 名曲拾遗）与结算页演奏回放已完整落地。** 玩法、关卡数值、星级规则、功能状态、里程碑与宣传话术见 **[`docs/game.md`](./docs/game.md)**；本文只讲技术栈、构建部署、架构与改动指引。
 
 ---
 
@@ -62,7 +62,19 @@ npm run build:h5
 yarn build:h5
 ```
 
-编译产物在 `dist/h5` 目录，可直接部署到静态服务器。
+产物有两份：
+
+- `dist/h5/` —— 静态文件目录，可直接部署到静态服务器。
+- `dist/h5.zip` —— 同一批文件压成的 zip，**`index.html` 在压缩包根目录**（不套一层目录），用于只收压缩包的上传平台。
+
+打包前会做一次白名单校验：只保留 `jpg/css/gif/svg/png/js/jpeg/json/html/woff2/webp/woff`，其他文件（例如 webpack 默认会吐的 `*.js.LICENSE.txt`、sourcemap）会被删除并逐条打印。`extractComments` 已在 `config/index.ts` 里关掉，正常情况下不会再有 `.txt`。
+
+只重新打包、不重新编译：
+
+```bash
+npm run pack:h5                     # dist/h5 → dist/h5.zip
+node scripts/pack-h5.js --keep      # 只报告非白名单文件，不删除（它们仍不会进 zip）
+```
 
 ---
 
@@ -194,6 +206,15 @@ node scripts/preview-cards.js   # 产出 docs/card-preview.html
 # 真机视口（375×812）截图 / 点击验证（开发期自检用）
 node scripts/cdp-shot.js "http://127.0.0.1:8899/#/pages/home/index" shot.png --wait=2200
 # 可选：--clicks=1,2,3 依次点格子、--init=scripts/seed-save.js 预置进度、--full 截整页
+
+# 结算页回放取帧 + 音频探针（自动打一局 → 等碎片出现 → 连拍，末尾打印捕获音数/间隔/音高范围）
+node scripts/shot-replay.js "http://127.0.0.1:8899/#/pages/home/index" docs/shots
+# 可选第 3/4 参数：关卡 id、总格数（默认 1-1 / 9）
+
+# 预置存档（截图用，写成 Taro H5 的 {"data": ...} 双层包装，裸写会被判成「非本 API 写入」而丢弃）
+#   seed-save.js          9 星 / 卷一进行中（关卡页「在此」标记、曲集「我的演奏」回放）
+#   seed-save-classics.js 30 星 / 卷一 10 关满星（曲集「名曲拾遗」解锁进度）
+#   seed-save-full.js     18 星 / 三卷全开（验卷二圆形卡、卷三图案卡）
 ```
 
 ---
@@ -205,7 +226,7 @@ node scripts/cdp-shot.js "http://127.0.0.1:8899/#/pages/home/index" shot.png --w
 3. 音效参数改动后需要重新运行 `gen-sounds.js`
 4. 曲目改动后需要重新运行 `gen-songs.js`
 5. 图案形状改动后需要运行 `preview-shapes.js` 验证（必查「连通块=1」与 3×3~8×8 全部可划分）
-6. 提交前跑 `npx tsc --noEmit` 与 `npm run build:h5`，两者都必须干净
+6. 提交前跑 `npx tsc --noEmit`；确实要出 H5 包 / 部署时才跑 `npm run build:h5`（日常开发与预览走内置预览服务，别用 build 代替）
 
 ---
 
@@ -217,27 +238,29 @@ shuerte/
 ├── docs/
 │   ├── game.md                # 玩法文档：游戏介绍 / 规则 / 星级 / 数值表 / 宣传话术
 │   ├── game-design.md         # 早期游戏设计大纲
-│   ├── design-v2.md           # v2 视觉与音乐系统改版方案
+│   ├── design-v2.md           # v2 视觉与音乐系统改版方案（含实施记录与后续修订）
+│   ├── design-v2-visual.html  # v2 视觉稿（浏览器直接打开）
 │   ├── audio-system-design.md # 音频系统设计方案（修音 / 伴奏 / 名曲）
 │   ├── audio-license.md       # 音频资产与版权说明
-│   └── tech-plan.md           # 技术方案
-├── scripts/                   # 生成与自检脚本（音效 / 曲库 / 体检 / 相似度 / 图案 / 图标 / 预览 / 截图）
+│   ├── tech-plan.md           # 早期技术方案
+│   └── shots/                 # 自检截图与回放取帧（cdp-shot / shot-replay 的产物）
+├── scripts/                   # 生成与自检脚本（音效 / 曲库 / 体检 / 相似度 / 图案 / 图标 / 预览 / 截图 / 回放探针 / 预置存档）
 └── src/
     ├── app.config.ts          # 页面注册 + tabBar
-    ├── app.tsx                # 启动时同步「音效 / 震动」设置到服务层
+    ├── app.tsx                # 启动时同步「音效 / 震动 / 伴奏」设置到服务层
     ├── pages/
-    │   ├── home/              # 首页（tabBar）：五线谱浮音、当前曲目、三卷进度
+    │   ├── home/              # 首页（tabBar）：3×3 演示盘、一行规则、主按钮、三卷进度
     │   ├── levels/            # 关卡（tabBar）：三卷签条、卷首进度、引子入口、关卡卡
-    │   ├── mine/              # 我的（tabBar）：星星总览、统计、设置、清空记录
-    │   ├── collection/        # 曲集（tabBar）：唱片列表、整曲回放、收录进度
+    │   ├── collection/        # 曲集（tabBar）：唱片列表、整曲回放、伴奏开关、名曲拾遗
+    │   ├── mine/              # 我的（tabBar）：演奏者统计、声音 / 画面设置、清空记录
     │   ├── game/              # 对局（核心，含引子模式）
-    │   ├── result/            # 结算（核心）
+    │   ├── result/            # 结算（核心，含演奏回放）
     │   └── rank/              # 排行榜（占位）
-    ├── components/            # GameGrid / GridCell / TimerRing / StarRating / LevelCard / Disc
+    ├── components/            # GameGrid / GridCell / TimerRing / StarRating / LevelCard / Disc / RunReplay
     ├── hooks/useGameEngine.ts # 引擎状态机 + 副作用编排
-    ├── utils/                 # gameEngine / circleLayout / silhouette / scoring / progress / shuffle / music / beats / format / classics（纯函数）
+    ├── utils/                 # gameEngine / circleLayout / silhouette / scoring / progress / shuffle / music / beats / replay / format / classics（纯函数）
     ├── services/              # audio / accompaniment / haptics / storage（平台能力封装）
-    ├── store/useSaveStore.ts  # 存档 + 设置
+    ├── store/                 # useSaveStore（存档 + 设置）、useRunStore（对局 → 结算的一次性交接）
     ├── data/                  # levels.ts（关卡蓝图与阈值表）、patternShapes.json（12 个图案的归一化多边形）、songs.ts、classics.ts、sounds.ts（生成文件）
     ├── styles/                # theme.scss（配色与格子色板）、variables.scss（间距 / 圆角 / 字体）
     └── assets/tabbar/         # tabBar 图标（仅 PNG）
@@ -256,7 +279,7 @@ shuerte/
 
 - **逻辑与 UI 解耦**：`utils/gameEngine.ts` 是零 UI 依赖的纯函数状态机（`createGame` / `tapCell` / `pauseGame` / `resumeGame`），`utils/circleLayout.ts` 与 `utils/silhouette.ts` 是纯几何计算（圆盘扇环分区、图案轮廓与分格），都可单独测试
 - **计时精度**：起点记录时间戳，显示值 = `now - startedAt - 暂停时长 + 罚时`，不使用定时器累加
-- **渲染性能**：一次点击只变更 2 个格子对象的引用（其余格子 `React.memo` 直接跳过），计时刷新被隔离在 `TimerBar` 内部；卡片几何由 `useMemo` 缓存，形状不会每次重算
+- **渲染性能**：一次点击只变更 2 个格子对象的引用（其余格子 `React.memo` 直接跳过），计时刷新被隔离在 `TimerRing` 内部；卡片几何由 `useMemo` 缓存，形状不会每次重算
 - **方形卡布局**：格位用百分比 + `padding-bottom` 撑正方形，只依赖容器宽度
 - **圆形卡布局**：整块圆盘按半径分圈（第 k 圈 2k-1 格，1+3+5+…=n²）再按角度分格，每格用 `clip-path: polygon(圆心 + 圆弧)` 裁成扇形；渲染时**外圈先画、内圈后画**，内圈自然盖住外圈延伸到圆心的部分，就得到扇环。半径在弧线两端用 `smoothstep` 回落，扇环因此带圆角
 - **图案卡布局**：12 个图案各由一组「圆 / 椭圆 / 胶囊 / 多边形」描述，构建期烘成一条归一化多边形存进 `patternShapes.json`；数字格在轮廓内部按 **Voronoi 划分**——先在轮廓里铺开一批均匀的格心（最远点采样 + Lloyd 松弛，且只落在离轮廓够远的「厚处」），再让每格从自己的格心向外生长，得到铺满轮廓的不规则多边形
@@ -265,15 +288,20 @@ shuerte/
 - **SVG 以 data URI 内联**：小程序没有 `btoa`，base64 是自实现的；坐标系固定 `viewBox="0 0 100 100"`，1 单位 ≈ 6.9rpx
 - **字号自适应**：格内字号用 `em` 相对卡片基准字号；圆形卡有按圈数收敛的字号档（44→22rpx），图案卡有按尺寸收敛的字号档（44→20rpx）——因为扇环沿半径方向很薄、轮廓内格子也比同尺寸规整网格小
 - **限时机制**：引擎内 100ms 轮询当前用时（只读快照、不触发渲染），归零即判定失败并跳转失败结算
+- **演奏回放（结算页）**：三条线分工——`utils/replay.ts` 只算节奏表（纯函数，输出每格 `delay` 与发声表 `cues`）；`components/RunReplay` 只按 `delay` 写 `animation-delay`，让 CSS 合成层自己跑（64 格只渲染一次，不进 setData 循环），播完每格裂成 3 条墨屑飞散；`pages/result` 拿到 `cues` 后负责排音
+- **回放的时间尺度**：保留相邻击键的**相对比例**、整体压到 1.1~3.2 秒，相邻两格至少 **50ms**——这个下限同时是「人能分辨相邻两音」的门槛（再小 8×8 的 64 个音会糊成一堵墙）；超过 **32 格隔一格响一个**，8×8 由 64 音降到 32 音
+- **回放为什么不用逐格 `setTimeout`**：结算页的音没有用户手势托底，iOS 微信 / 浏览器会把 `AudioContext` 挂成 suspended，`resume()` 是异步的，等它 resolve 时前几个音已经排空；而碎片动画最卡的那几百毫秒又正好压在回放后半段。改为 `unlockAudio()`（显式 resume 并 await）→ `getAudioTime()` → `playNote(midi, vel, when)` **一次性按绝对时间**排进音频图，时序交给音频硬件，主线程怎么卡都不影响
+- **回放数据只走内存**：`store/useRunStore` 刻意不持久化——它只服务刚打完这一局，8×8 的 64 个时间戳塞不进微信页面 path
 
-**存档字段**（Storage key：`shuerte_save`）：
+**存档字段**（Storage key：`shuerte_save`，`SAVE_VERSION = 5`）：
 
 ```
+version      存档结构版本（当前 5；加字段必须升版本 + 写 migrate）
 stars        关卡 id → 最高星级
 bestTimes    关卡 id → 最佳用时（ms）
 bestErrors   关卡 id → 最少失误
 grades       关卡 id → 最好的一次演奏评级（S/A/B/C，仅供曲集光效与成就，不计入星级）
-bestRuns     关卡 id → 最好那一次的 { stars, elapsed, errors, beats[] }（beats 是击键节奏，供曲集回放）
+bestRuns     关卡 id → 最好那一次的 { stars, elapsed, errors, beats[] }（beats 是击键节奏，8×8 满盘正好 64 个，供曲集回放）
 totalGames / streakDays / lastPlayedDate
 recent       最近 10 条成绩（仍记录，页面暂不展示，留给后续成就 / 分享）
 tutorialDone 引子是否已通（老存档按「玩过」自动补齐）
@@ -284,7 +312,7 @@ settings     { sound, music, accompaniment, haptics, colorful, timbre }
 
 **音效实现**：4 个音效由 `scripts/gen-sounds.js` 用 Node 合成 WAV（正弦波 + 包络），内联为 base64 写入 `src/data/sounds.ts`，因此项目不依赖任何外部音频文件。H5 端直接播放 data URI；小程序端 `InnerAudioContext` 不支持 data URI，会把 base64 落地到 `USER_DATA_PATH` 再播放。
 
-**演奏音实现**：`services/audio.ts` 用 WebAudio 实时合成（3 种音色的包络 / 谐波参数），不占用任何音频资源；音高由 `utils/music.ts` 从「数字 → 乐谱位置」映射而来，倒序关只反排数字不反排乐谱，所以听感始终是正着走的旋律。双色关的旋律轨与低音轨**各有各的指针**——共用一个下标会让旋律每隔一个音就断一次。
+**演奏音实现**：`services/audio.ts` 用 WebAudio 实时合成（3 种音色的包络 / 谐波参数），不占用任何音频资源；音高由 `utils/music.ts` 从「数字 → 乐谱位置」映射而来，倒序关只反排数字不反排乐谱，所以听感始终是正着走的旋律。双色关的旋律轨与低音轨**各有各的指针**——共用一个下标会让旋律每隔一个音就断一次。声部分池：**旋律 40 / 伴奏 24**，各自淘汰、互不抢占（旋律池提到 40 是因为结算页回放要一次性排 32 个音，池子小会把还没响的音 `stop` 掉）。
 
 **伴奏实现**：`services/accompaniment.ts` 只算数据（低音 / 铺底 / 琶音 / 轻击四个声部的相对偏移与包络），排程由 `audio.ts` 的 `scheduleVoice` 完成，两条总线（旋律 0.90 / 伴奏 0.55）汇进同一个限幅器。回放时旋律与伴奏走**同一个 lookahead 循环**，时间轴由 `barTimes[b] = noteTimes[b * 4]` 对齐到玩家的真实击键节奏，不做量化——量化会让「回放我的演奏」变成「另一个人弹的」。
 
@@ -309,6 +337,8 @@ settings     { sound, music, accompaniment, haptics, colorful, timbre }
 | 调整图案字号 | `src/components/GameGrid/index.module.scss` 的 `pattern3~8` |
 | 调整图案卡配色 | `src/styles/theme.scss` 的 `$color-pattern-face` / `$color-pattern-line`（SVG 拿不到 SCSS 变量，这两个值要同步到 `silhouette.ts` 的常量） |
 | 调整限时松紧 | `src/data/levels.ts` 的 `SIZE_TIME_LIMITS`（口径 = `SIZE_THRESHOLDS.silver × 1.15`），想整体放宽就改系数并重算全表 |
+| 调整结算页回放节奏 / 出声密度 | `src/utils/replay.ts` 的 `MIN_TOTAL` / `MAX_TOTAL` / `MIN_STEP` / `SPARSE_OVER` | `MIN_STEP` 是「人耳能分辨相邻两音」的下限，调到 40ms 以下 8×8 会糊成一团；`POP_MS` 必须与 `RunReplay` 的 `replayPop` 动画时长一致 |
+| 调整回放音量 | `src/pages/result/index.tsx` 的 `cueVelocity`（按音数衰减） | 音高不要另写一套，复用 `getNoteForValue`，否则回放听到的不是刚才那一遍 |
 | 调整星级阈值 | `src/data/levels.ts` 的 `SIZE_THRESHOLDS`；收紧系数在 `cycleFactor`，极速档在 `PLATINUM_RATIO` |
 | 换配色 / 加背景图案 | `src/styles/theme.scss` |
 | 调整提示音 | `scripts/gen-sounds.js` 参数后重新运行（勿手改 `data/sounds.ts`） |
@@ -325,6 +355,7 @@ settings     { sound, music, accompaniment, haptics, colorful, timbre }
 
 - 成绩仅保存在本机，换设备会丢失（云端同步属 M3）
 - 真机手感（震动强度、音效音量、手指点击命中率）尚未完整验证，建议扫码真机复验
+- 结算页回放的声音只在 H5 无头 Chrome 里用音频探针验过（捕获音数 / 间隔 / 音高范围），**iOS 微信静音键与低端机并发**未验证
 - 图案卡的分格与线条是**构建期算好缓存**的：改 `silhouette.ts` 的几何参数后，需重启预览或清缓存才能看到效果
 - 项目名仍为模板默认的 `taro_template`，若需改名请同步 `package.json` 的 `name` 与 `config/index.ts` 的 `projectName`
 - `src/services/cloud.ts` 为模板预置的云调用封装，M1 无后端未使用

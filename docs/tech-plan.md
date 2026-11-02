@@ -1,7 +1,7 @@
 # 眼力大作战 · 技术方案（早期存档）
 
 > 配套文档：[游戏大纲](./game-design.md)
-> 本文为**早期技术方案存档**，落地后有多处调整：Taro 3 → **4.1.9**；`core/` → `utils/`；`profile` → `mine`；档位「初级/高级/困难」→「小令/中调/长调」；新增曲集页、四声部伴奏引擎、名曲拾遗。**权威实现以 [README.md](../README.md)、[AGENTS.md](../AGENTS.md) 与代码为准。**
+> 本文为**早期技术方案存档**，落地后有多处调整：Taro 3 → **4.1.9**；`core/` → `utils/`；`profile` → `mine`；`TimerBar` → **`TimerRing`**（环形进度 + 黑胶唱片三层）；档位「初级/高级/困难」→「小令/中调/长调」；新增曲集页、四声部伴奏引擎、名曲拾遗、**结算页演奏回放**（`components/RunReplay` + `utils/replay.ts` + `store/useRunStore`）。声部池由「8 个共用」改为「旋律 40 / 伴奏 24 分池」，存档 `SAVE_VERSION` 已到 **5**（`stars` / `bestRuns` / `tutorialDone` / `settings.accompaniment` 分四次加字段）。**权威实现以 [README.md](../README.md)、[AGENTS.md](../AGENTS.md) 与代码为准。**
 
 ## 1. 技术选型
 
@@ -36,7 +36,7 @@ shuerte/
 │   ├── components/             # 纯展示组件（可复用、无业务副作用）
 │   │   ├── Grid/               # N×N 方格容器
 │   │   ├── Cell/               # 单个格子
-│   │   ├── TimerBar/           # 计时 / 进度条
+│   │   ├── TimerRing/          # 计时（环形进度 + 唱片，原方案叫 TimerBar）
 │   │   ├── TargetHint/         # 当前目标数字提示
 │   │   ├── StarRating/         # 星级展示
 │   │   ├── LevelCard/          # 关卡卡片
@@ -209,7 +209,7 @@ interface SaveData {
 | --- | --- | --- |
 | `Grid` | 网格布局，按 size 计算行列 | `size`, `cells`, `onTap` |
 | `Cell` | 单格渲染（`React.memo`） | `value`, `state`, `onTap` |
-| `TimerBar` | 计时显示 / 限时进度 | `elapsed`, `limit?` |
+| `TimerRing`（原 `TimerBar`） | 计时显示 / 限时进度 | `elapsed`, `limit?` |
 | `TargetHint` | 当前目标数字 | `target` |
 | `StarRating` | 星级展示（含弹出动画） | `stars`, `animate` |
 | `LevelCard` | 关卡卡片（星级/最佳/锁态） | `level`, `record`, `locked` |

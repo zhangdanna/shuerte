@@ -2,9 +2,10 @@
 
 .page {
   box-sizing: border-box;
-  min-height: 100vh;
-  // 底部留出 tabBar 的高度
-  padding: $spacing-md $page-padding 160rpx;
+  // 铺满外壳扣掉 tabBar 后的可视区（100vh 在移动端会多算一截，见 page-viewport）
+  @include page-viewport;
+  padding: $spacing-md $page-padding 0;
+  @include page-bottom-space;
   background-color: $paper-0;
   @include paper-grain;
 }

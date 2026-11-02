@@ -2,12 +2,24 @@ import React, { useEffect } from 'react';
 import { Text, View } from '@tarojs/components';
 import Taro, { useRouter, useUnload } from '@tarojs/taro';
 import classnames from 'classnames';
+import RunReplay from '@/components/RunReplay';
 import StarRating from '@/components/StarRating';
 import { getChapterById, getLevelById, getNextLevel, LEVELS } from '@/data/levels';
 import { getSongOrDefault } from '@/data/songs';
-import { playSound, releaseSounds } from '@/services/audio';
+import {
+  getAudioTime,
+  initAudio,
+  playNote,
+  playSound,
+  releaseSounds,
+  stopAllNotes,
+  unlockAudio
+} from '@/services/audio';
+import { useRunStore } from '@/store/useRunStore';
 import { useSaveStore } from '@/store/useSaveStore';
+import { getNoteForValue } from '@/utils/music';
 import { isLevelUnlocked } from '@/utils/progress';
+import { ReplayCue } from '@/utils/replay';
 import { ERROR_PENALTY, GRADE_LABELS } from '@/utils/scoring';
 import { formatSeconds } from '@/utils/format';
 import { PerformanceGrade } from '@/types/game';
@@ -31,8 +43,12 @@ const ResultPage: React.FC = () => {
 
   const starsMap = useSaveStore((state) => state.stars);
   const bestTimes = useSaveStore((state) => state.bestTimes);
+  const runSnapshot = useRunStore((state) => state.run);
 
   useEffect(() => {
+    // 回放要出声，先把合成器预热（对局页已经建过，这里是幂等的兜底：
+    // 从分享/历史直接进结算页时，AudioContext 可能还是 suspended）
+    initAudio();
     // 失败时引擎已经播过错误音，这里只在通关时播胜利音
     if (!failed) {
       playSound('success');
@@ -59,6 +75,45 @@ const ResultPage: React.FC = () => {
   }
 
   const song = getSongOrDefault(level.songId);
+  // 交接数据只对「刚打完的这一关」有效：从历史/分享链接进来时 store 里可能是别的关卡
+  const replayRun = runSnapshot && runSnapshot.levelId === level.id ? runSnapshot : null;
+
+  /**
+   * 回放发声：拿到整条发声表后**一次性按绝对时间**排进音频图。
+   *
+   * 为什么不逐个 setTimeout：结算页的音没有用户手势托底，iOS 微信 / 浏览器会把
+   * AudioContext 挂成 suspended，且碎片动画最卡的那几百毫秒正好落在回放后半段，
+   * 定时器会挤成一团甚至丢音 —— 表现就是"动画在跑、没声音"。
+   * 绝对时间排程把时序交给音频硬件，主线程怎么卡都不影响。
+   */
+  const cueVelocity = Math.max(0.4, Math.min(0.72, 0.72 * Math.pow(10 / level.total, 0.25)));
+  const handlePlan = (cues: ReplayCue[]) => {
+    if (cues.length === 0) {
+      return;
+    }
+    // 重播前先掐掉上一轮还没响完的音
+    stopAllNotes();
+    const startedAt = Date.now();
+    void (async () => {
+      const ready = await unlockAudio();
+      const base = getAudioTime();
+      if (!ready || base === null) {
+        // 极端降级：没有 WebAudio，退回定时器逐个敲（playNote 内部会退成 click 提示音）
+        cues.forEach((cue) =>
+          setTimeout(() => playNote(getNoteForValue(song, level, cue.value), cueVelocity), cue.atMs)
+        );
+        return;
+      }
+      // resume 花掉的时间补回来，声画才不会越走越偏
+      const lag = (Date.now() - startedAt) / 1000;
+      cues.forEach((cue) => {
+        const when = base + cue.atMs / 1000 - lag + 0.06;
+        playNote(getNoteForValue(song, level, cue.value), cueVelocity, Math.max(base + 0.02, when));
+      });
+      console.info('[Result] 回放排音', { cues: cues.length, lagMs: Math.round(lag * 1000) });
+    })();
+  };
+
   const songLevels = LEVELS.filter((item) => item.songId === song.id);
   const collected = songLevels.filter((item) => (starsMap[item.id] ?? 0) > 0).length;
   const songFull = collected === songLevels.length;
@@ -104,6 +159,9 @@ const ResultPage: React.FC = () => {
       <Text className={styles.chapter}>
         {level.chapterTitle} · 第 {level.globalIndex} 关 · {level.size}×{level.size}
       </Text>
+
+      {/* 这一遍的演奏：按你的点击顺序重放盘面（整段连着出声），播完碎掉。没有交接数据时不渲染 */}
+      {replayRun && <RunReplay run={replayRun} onPlan={handlePlan} />}
 
       {failed ? (
         <View className={styles.failBlock}>

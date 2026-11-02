@@ -2,16 +2,18 @@
 
 .home {
   box-sizing: border-box;
-  min-height: 100vh;
+  // 铺满「外壳扣掉 tabBar 之后」的可视区，而不是 100vh（见 variables.scss 的 page-viewport）
+  @include page-viewport;
   background-color: $paper-0;
   @include paper-grain;
-  // 底部留出 tabBar 的高度，否则最后一段会被遮住
-  padding: 72rpx $page-padding 160rpx;
+  // tabBar 的高度已经由外壳扣掉了，这里只留呼吸空间 + 全面屏安全区
+  padding: 56rpx $page-padding 0;
+  @include page-bottom-space;
   display: flex;
   flex-direction: column;
 }
 
-/* ============ 首屏：谱纸与宣传语 ============ */
+/* ============ 首屏：先说清是什么游戏，再立刻能开局 ============ */
 .hero {
   animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -28,8 +30,17 @@
   padding-right: $spacing-md;
 }
 
+// 品类行：让「舒尔特方格」在标题之上先入眼，比任何形容词都直接
+.kicker {
+  display: block;
+  font-size: 20rpx;
+  letter-spacing: 0.22em;
+  color: $ink-400;
+}
+
 .title {
   display: block;
+  margin-top: 10rpx;
   font-family: $font-serif;
   font-size: 64rpx;
   font-weight: $font-weight-bold;
@@ -40,18 +51,19 @@
 
 .tagline {
   display: block;
-  margin-top: 14rpx;
+  margin-top: 12rpx;
   font-size: 26rpx;
-  letter-spacing: 0.06em;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
   color: $ink-400;
 }
 
 /* 朱砂印：落款感，慢慢呼吸 */
 .seal {
-  width: 88rpx;
-  height: 88rpx;
+  width: 84rpx;
+  height: 84rpx;
   flex: 0 0 auto;
-  margin-top: 6rpx;
+  margin-top: 4rpx;
   @include seal-chip;
   border-width: 4rpx;
   border-radius: $radius-sm;
@@ -60,144 +72,108 @@
 }
 
 .sealText {
-  font-size: 40rpx;
+  font-size: 38rpx;
   font-weight: $font-weight-semibold;
   line-height: 1;
   color: $seal;
 }
 
-/* 五线谱：音符依次亮起，像有人在谱纸上落笔 */
-.staff {
-  position: relative;
-  height: 132rpx;
-  margin-top: $spacing-lg;
-  overflow: hidden;
-}
-
-.staffLine {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 2rpx;
-  background-color: $line;
-  opacity: 0.7;
-}
-
-.staffLine:nth-child(1) {
-  top: 22%;
-}
-
-.staffLine:nth-child(2) {
-  top: 36%;
-}
-
-.staffLine:nth-child(3) {
-  top: 50%;
-}
-
-.staffLine:nth-child(4) {
-  top: 64%;
-}
-
-.staffLine:nth-child(5) {
-  top: 78%;
-}
-
-.staffNote {
-  position: absolute;
-  font-size: 34rpx;
-  line-height: 1;
-  color: $sunset;
-  opacity: 0.24;
-  animation: noteFloat 3.4s ease-in-out infinite;
-}
-
-/* 当前曲目：一张装裱过的曲签 */
-.scroll {
-  margin-top: $spacing-lg;
-  padding: 24rpx 28rpx;
-  @include scroll-frame;
-  border-radius: $radius-lg;
-  animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+/* ============ 演示盘：数字依次点亮，就是这一关要点的顺序 ============ */
+.demo {
+  width: 388rpx;
+  margin: 40rpx auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  transition: transform $transition-fast;
 
   &:active {
-    background-color: $paper-2;
+    transform: scale(0.985);
   }
 }
 
-.scrollHead {
+.demoCell {
+  position: relative;
+  width: 124rpx;
+  height: 124rpx;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  background-color: $paper-1;
+  border: 2rpx solid $line;
+  border-radius: 12rpx;
+  animation: demoCell 4.6s linear infinite;
 }
 
-.scrollLabel {
-  font-size: $font-size-xs;
-  letter-spacing: 0.16em;
-  color: $ink-400;
-}
-
-.scrollTier {
-  font-size: $font-size-xs;
-  color: $ink-400;
+.demoNum {
+  font-family: $font-serif;
+  font-size: 46rpx;
+  font-weight: $font-weight-medium;
+  line-height: 1;
+  color: $ink-800;
   font-variant-numeric: tabular-nums;
 }
 
-.songRow {
-  margin-top: $spacing-sm;
-  display: flex;
-  align-items: center;
+// ♪ 只在「点过」之后出现，并且留在那儿 —— 和真棋盘的反馈一致
+.demoNote {
+  position: absolute;
+  right: 10rpx;
+  bottom: 6rpx;
+  font-size: 22rpx;
+  line-height: 1;
+  color: $sunset;
+  opacity: 0;
+  animation: demoNoteIn 260ms ease both;
 }
 
-// 唱片尺寸交给这个槽位，Disc 自身用 100% 铺满
-.discSlot {
-  width: 112rpx;
-  height: 112rpx;
-  flex: 0 0 auto;
-}
-
-.songInfo {
-  flex: 1;
-  min-width: 0;
-  margin-left: $spacing-md;
-}
-
-.songTitle {
+.demoCaption {
   display: block;
-  font-family: $font-serif;
-  font-size: 34rpx;
-  font-weight: $font-weight-semibold;
-  color: $ink-900;
-}
-
-.songMeta {
-  display: block;
-  margin-top: 6rpx;
-  font-size: $font-size-xs;
-  color: $ink-400;
-}
-
-.arrow {
-  font-size: 36rpx;
+  margin-top: 18rpx;
+  text-align: center;
+  font-size: 20rpx;
+  letter-spacing: 0.08em;
   color: $ink-200;
 }
 
-.segments {
-  margin-top: $spacing-md;
+/* ============ 主按钮：落在曲子展示下面 ============ */
+.startSection {
+  margin-top: $spacing-lg;
   display: flex;
-  gap: 6rpx;
+  flex-direction: column;
+  align-items: center;
 }
 
-.segment {
-  flex: 1;
-  height: 6rpx;
-  border-radius: 3rpx;
-  background-color: $paper-2;
-  transition: background-color $transition-base;
-}
-
-.segmentOn {
+.startButton {
+  width: 100%;
+  height: 112rpx;
   background-color: $sunset;
+  border-radius: $radius-button;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform $transition-base, background-color $transition-base;
+  animation: buttonGlow 3.6s ease-in-out infinite;
+
+  &:active {
+    transform: scale(0.98);
+    background-color: $sunset-deep;
+  }
+}
+
+.startButtonText {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-medium;
+  letter-spacing: 0.08em;
+  color: $color-text-white;
+}
+
+.levelInfo {
+  display: block;
+  margin-top: $spacing-md;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $ink-400;
 }
 
 /* ============ 三卷进度 ============ */
@@ -281,49 +257,63 @@
   }
 }
 
-/* ============ 主按钮 ============ */
-.startSection {
-  margin-top: auto;
-  padding-top: $spacing-xl;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both;
-}
-
-.startButton {
-  width: 100%;
-  height: 112rpx;
-  background-color: $sunset;
-  border-radius: $radius-button;
+/* ============ 配乐：降级成一行，音乐是可选层 ============ */
+.songBar {
+  margin-top: 20rpx;
+  padding: 16rpx 22rpx;
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: transform $transition-base, background-color $transition-base;
-  animation: buttonGlow 3.6s ease-in-out infinite;
+  background-color: $paper-1;
+  border: 2rpx solid $line;
+  border-radius: $radius-lg;
+  animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
 
   &:active {
-    transform: scale(0.98);
-    background-color: $sunset-deep;
+    background-color: $paper-2;
   }
 }
 
-.startButtonText {
-  font-size: $font-size-xl;
-  font-weight: $font-weight-medium;
-  letter-spacing: 0.08em;
-  color: $color-text-white;
+// 尺寸交给槽位，Disc 自身用 100% 铺满
+.songDisc {
+  width: 64rpx;
+  height: 64rpx;
+  flex: 0 0 auto;
 }
 
-.levelInfo {
-  margin-top: $spacing-md;
-  font-size: $font-size-sm;
+.songBarText {
+  flex: 1;
+  min-width: 0;
+  margin-left: 18rpx;
+  display: flex;
+  align-items: baseline;
+}
+
+.songBarTitle {
+  font-family: $font-serif;
+  font-size: 26rpx;
+  color: $ink-900;
+  @include text-ellipsis;
+}
+
+.songBarMeta {
+  margin-left: 14rpx;
+  font-size: 20rpx;
   color: $ink-400;
+  white-space: nowrap;
+}
+
+.songBarArrow {
+  flex: 0 0 auto;
+  margin-left: $spacing-xs;
+  font-size: 32rpx;
+  line-height: 1;
+  color: $ink-200;
 }
 
 /* ============ 底部数据 ============ */
 .footer {
-  margin-top: $spacing-xl;
+  // 内容撑不满一屏时，页脚落到屏幕底部，不留一段空纸
+  margin-top: auto;
   padding-top: $spacing-lg;
   border-top: 2rpx solid $line;
   display: flex;
@@ -374,16 +364,42 @@
   }
 }
 
-@keyframes noteFloat {
-  0%,
-  100% {
-    opacity: 0.18;
-    transform: translateY(2rpx);
+// 一格亮起又退回纸面：像一只手正按顺序点过去
+@keyframes demoCell {
+  0% {
+    background-color: $sunset-soft;
+    border-color: $sunset;
+    transform: scale(1.05);
   }
 
-  40% {
-    opacity: 0.95;
-    transform: translateY(-6rpx);
+  7% {
+    background-color: $sunset-soft;
+    border-color: $sunset;
+    transform: scale(1.05);
+  }
+
+  26% {
+    background-color: $paper-1;
+    border-color: $line;
+    transform: scale(1);
+  }
+
+  100% {
+    background-color: $paper-1;
+    border-color: $line;
+    transform: scale(1);
+  }
+}
+
+@keyframes demoNoteIn {
+  from {
+    opacity: 0;
+    transform: translateY(4rpx) scale(0.6);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

@@ -1,0 +1,272 @@
+@use '@/styles/variables.scss' as *;
+
+.replay {
+  width: $max-content-width;
+  margin-top: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.head {
+  width: 100%;
+  padding: 0 $spacing-xs;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.title {
+  font-family: $font-serif;
+  font-size: $font-size-sm;
+  letter-spacing: 0.14em;
+  color: $ink-900;
+}
+
+.meta {
+  font-size: 20rpx;
+  color: $ink-400;
+  font-variant-numeric: tabular-nums;
+}
+
+// 面板尺寸按关卡尺寸分档：3×3 不让格子变成巨无霸，8×8 也不挤成一条
+.boardWrap {
+  position: relative;
+  margin-top: 18rpx;
+  width: 520rpx;
+  height: 520rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: height 320ms ease;
+}
+
+.size3 {
+  width: 328rpx;
+  height: 328rpx;
+}
+
+.size4 {
+  width: 440rpx;
+  height: 440rpx;
+}
+
+// 播完就收成一行：否则页面顶部会留一块 500rpx 的空洞，看着像加载失败
+.collapsed {
+  height: 96rpx;
+  transition: height 320ms ease;
+}
+
+.board {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.boardHide {
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+// 格位只负责定位与间距，真正的纸片是里面的 .cell
+.slot {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 4rpx;
+}
+
+.cell,
+.cellIdle {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $paper-1;
+  border: 2rpx solid $line;
+  border-radius: 10rpx;
+  opacity: 0;
+}
+
+// 出场：从 0.62 弹到 1.07 再落回 1，像手指按下去的那一下
+.cell {
+  animation: replayPop 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+// 这一局没点到：留一块极淡的影，让人看见「还有这么多没走」
+.cellIdle {
+  animation: none;
+  opacity: 0.1;
+}
+
+// 碎裂瞬间数字先走一步、纸片后走 —— 看起来才是「数字碎了」而不是「卡片飞了」。
+// 格子自身必须让位（透明），否则碎片和格子同色，飞出去也看不出来。
+.cellGone {
+  animation: none;
+  opacity: 1;
+  background-color: transparent;
+  border-color: transparent;
+
+  .num {
+    opacity: 0;
+    transform: scale(1.5);
+    transition: opacity 120ms ease, transform 120ms ease;
+  }
+
+  // ♪ 有入场动画（fill-mode: both），普通声明盖不住它，必须把动画也关掉
+  .note {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+.num {
+  font-family: $font-serif;
+  font-weight: $font-weight-medium;
+  line-height: 1;
+  color: $ink-800;
+  font-variant-numeric: tabular-nums;
+}
+
+// ♪ 只在点过之后出现，和真棋盘一致
+.note {
+  position: absolute;
+  right: 6%;
+  bottom: 4%;
+  font-size: 22rpx;
+  line-height: 1;
+  color: $sunset;
+  opacity: 0;
+  animation: noteIn 220ms ease both;
+}
+
+// 数字字号跟着格子走（单位只能写在 class 里，inline style 的 rpx 在 H5 无效）
+.size3 .num {
+  font-size: 48rpx;
+}
+
+.size4 .num {
+  font-size: 46rpx;
+}
+
+.size5 .num {
+  font-size: 42rpx;
+}
+
+.size6 .num {
+  font-size: 36rpx;
+}
+
+.size7 .num {
+  font-size: 30rpx;
+}
+
+.size8 .num {
+  font-size: 26rpx;
+}
+
+// 碎片是「墨」不是「纸」：纸片和纸底几乎同色（#fffdf8 / #fbf6ee），飞出去根本看不见；
+// 数字本身就是墨，碎成墨屑既看得清，也符合「数字碎了」的语义。
+// 形状刻意做成**细长的斜条**而不是整块：整块会看成「方块变黑了」，细条才像笔画断裂。
+.shard {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: $ink-800;
+  border-radius: 1rpx;
+  box-sizing: border-box;
+  animation: shardFly 620ms cubic-bezier(0.3, 0.1, 0.6, 1) both;
+}
+
+// 三条 10% 高的斜条：8×8 有 64 格 × 3 片 = 192 片，
+// 条子一粗，第一帧就会糊成一堵黑墙
+.shard1 {
+  clip-path: polygon(23% 27%, 77% 21%, 78% 31%, 24% 35%);
+}
+
+.shard2 {
+  clip-path: polygon(19% 44%, 84% 39%, 85% 49%, 20% 53%);
+}
+
+.shard3 {
+  clip-path: polygon(28% 62%, 75% 58%, 76% 68%, 29% 71%);
+}
+
+.done {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  margin-top: -18rpx;
+  text-align: center;
+  font-family: $font-serif;
+  font-size: $font-size-sm;
+  letter-spacing: 0.16em;
+  color: $ink-400;
+  animation: doneIn 320ms ease both;
+}
+
+@keyframes replayPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.62);
+  }
+
+  62% {
+    opacity: 1;
+    transform: scale(1.07);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes noteIn {
+  from {
+    opacity: 0;
+    transform: translateY(4rpx) scale(0.6);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shardFly {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx, 0%), var(--dy, 0%)) rotate(var(--rot, 0deg)) scale(0.7);
+  }
+}
+
+@keyframes doneIn {
+  from {
+    opacity: 0;
+    transform: translateY(8rpx);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

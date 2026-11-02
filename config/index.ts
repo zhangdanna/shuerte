@@ -3,6 +3,26 @@ import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
 import devConfig from './dev';
 import prodConfig from './prod';
 import vitePluginImp from 'vite-plugin-imp';
+
+/**
+ * 产物里不要出现 `*.js.LICENSE.txt`。
+ *
+ * TerserPlugin 默认 `extractComments: true`，会把第三方声明抽成独立的 .txt 文件，
+ * 而 H5 托管平台只收白名单后缀（jpg/css/gif/svg/png/js/jpeg/json/html/woff2/webp/woff），
+ * 上传时会直接报「不支持文件类型 .txt」。
+ *
+ * 注意：只能在这里改 —— Taro 的 `terser.config` 只透传给 terserOptions，改不到 extractComments。
+ * 且必须在 webpackChain 里改：Taro 在 Combination.post() 才回调 webpackChain，
+ * 此时 setMinimizer 已经注册好 terserPlugin 了。
+ */
+const disableLicenseTxt = (chain: any) => {
+  if (!chain.optimization.minimizers.has('terserPlugin')) return;
+  chain.optimization.minimizer('terserPlugin').tap((args: any[]) => {
+    args[0] = { ...args[0], extractComments: false };
+    return args;
+  });
+};
+
 // https://taro-docs.jd.com/docs/next/config#defineconfig-辅助函数
 export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
   const baseConfig: UserConfigExport<'webpack5'> = {
@@ -51,6 +71,7 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
       },
       webpackChain(chain) {
         chain.resolve.plugin('tsconfig-paths').use(TsconfigPathsPlugin);
+        disableLicenseTxt(chain);
       },
     },
     h5: {
@@ -88,6 +109,7 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
       },
       webpackChain(chain) {
         chain.resolve.plugin('tsconfig-paths').use(TsconfigPathsPlugin);
+        disableLicenseTxt(chain);
       },
     },
     rn: {

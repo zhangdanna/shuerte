@@ -27,6 +27,7 @@
 | 校验图案轮廓与分格 | `node scripts/preview-shapes.js [形状名]`（`ASCII=1` 看轮廓、`DIVIDE=5` 看分格；改了图案轮廓必跑） |
 | 卡片造型肉眼验收 | `node scripts/preview-cards.js` → 用浏览器打开 `docs/card-preview.html`（直接调运行时几何函数画圆盘/图案卡/方形卡，不依赖 Taro 构建） |
 | 真机视口截图 / 点击验证 | `node scripts/cdp-shot.js "<url>" "<out.png>" [--wait=1500] [--clicks=1,2,3] [--init=scripts/seed-save.js]`（先起静态服务，见下） |
+| 结算页回放取帧 | `node scripts/shot-replay.js <baseUrl> [outDir] [levelId] [total]`（自动打一局→等碎片出现→按 80/220/400/620/1100ms 连拍；末尾会打印**回放音频探针**结果：捕获音数 / 平均间隔 / 音高范围，用来验证「有声音且跟着动画走」） |
 
 约定：
 - H5 自检：`npm run build:h5` → 在 `dist/h5` 起静态服务（`python -m http.server 8899`）→ 用 `scripts/cdp-shot.js` 截图。
@@ -49,7 +50,7 @@
 | 技术栈 | Taro 4.1.9 + React 18 + TypeScript 5 + Sass（CSS Modules）+ zustand + dayjs + classnames |
 | 设计稿基准 | 750rpx（`config/index.ts` 的 `designWidth: 375`，**代码里统一写 rpx**） |
 | 数据 | 纯本地，无后端、无登录、不涉及云开发 |
-| 进度 | v2 完成：36 关（小令/中调/长调 三卷 × 12 关 = 前 6 关正序 + 后 6 关变体（小令/中调倒序、长调双色），尺寸 3×3→8×8，卡片造型 方形/圆形/图案，每关限时、计时、音效、存档、星级结算（满星 3/4/5））+ 第一关前的「引子」指引关 + 顺序解锁；音频系统完成（6 首算法原创 + 4 声部伴奏引擎 + 6 首公有领域名曲按战绩解锁）；M2/M3 见 §3 |
+| 进度 | v2 完成：36 关（小令/中调/长调 三卷 × 12 关 = 前 6 关正序 + 后 6 关变体（小令/中调倒序、长调双色），尺寸 3×3→8×8，卡片造型 方形/圆形/图案，每关限时、计时、音效、存档、星级结算（满星 3/4/5））+ 第一关前的「引子」指引关 + 顺序解锁；音频系统完成（6 首算法原创 + 4 声部伴奏引擎 + 6 首公有领域名曲按战绩解锁）；结算页「演奏回放」完成（按本局点击顺序重放 + 碎裂，声音按绝对时间连奏）；M2/M3 见 §3 |
 
 ---
 
@@ -78,7 +79,7 @@
 
 | 页面 | 路径 | 类型 | 状态 |
 | --- | --- | --- | --- |
-| 首页 | `pages/home/index` | tabBar | ✅ 完整（v2 古风改版 + 谱纸动效） |
+| 首页 | `pages/home/index` | tabBar | ✅ 完整（玩法优先改版：演示盘 + 首屏主按钮） |
 | 关卡 | `pages/levels/index` | tabBar | ✅ 完整（v2 卷册式改版） |
 | 曲集 | `pages/collection/index` | tabBar | ✅ 完整（顺序解锁态） |
 | 我的 | `pages/mine/index` | tabBar | ✅ 完整（精简：无成绩列表） |
@@ -113,15 +114,16 @@
 | 关卡卡片 | `components/LevelCard` | ✅ 完成 | 尺寸徽标 + 星级 + 最佳用时 + 锁态/当前高亮 |
 | 音效 | `services/audio.ts` + `data/sounds.ts` | ✅ 完成 | 4 个音效（tick/click/error/success），base64 内联；演奏音与音效两条链路互不影响，可分别开关 |
 | 曲库与和声 | `data/songs.ts` + `scripts/gen-songs.js` + `scripts/analyze-songs.js` | ✅ 完成 | 6 首算法原创（16 小节 × 4 拍 = 64 音）；**和弦轨与旋律共用同一份「分段进行」**（B 段 bar 8–11 反转），`removeFriction` 清掉 1/6/11 半音的三类和声冲突；低音轨是走动低音（根–五–根–三）不是踏板；体检脚本的验收线是「强拍冲突 = 0」 |
-| 伴奏引擎 | `services/accompaniment.ts` + `services/audio.ts` | ✅ 完成 | 4 声部（低音/铺底/琶音/轻击）+ 分段动态（0–3 只低音铺底、4–7 加琶音、8–11 全开、末小节留白）；**单一 lookahead 调度**（25→30ms 醒一次、提前 0.25s 排程、全部用 `osc.start(when)` 绝对时间），旋律与伴奏同一时间轴；伴奏按 `barTimes[b] = noteTimes[b*4]` 跟随玩家击键，**不做量化**；旋律/伴奏声部分池（16/24），互不抢占 |
+| 伴奏引擎 | `services/accompaniment.ts` + `services/audio.ts` | ✅ 完成 | 4 声部（低音/铺底/琶音/轻击）+ 分段动态（0–3 只低音铺底、4–7 加琶音、8–11 全开、末小节留白）；**单一 lookahead 调度**（25→30ms 醒一次、提前 0.25s 排程、全部用 `osc.start(when)` 绝对时间），旋律与伴奏同一时间轴；伴奏按 `barTimes[b] = noteTimes[b*4]` 跟随玩家击键，**不做量化**；旋律/伴奏声部分池（**40**/24），互不抢占 |
 | 名曲拾遗 | `data/classics.ts` + `utils/classics.ts` | ✅ 完成 | 6 首公有领域名曲（欢乐颂/小步舞曲/致爱丽丝/卡农/绿袖子/茉莉花），自行记谱编配；解锁只认战绩（累计星星 24/48/72/96、1 张金唱片、8 关 S 评级），**全部由存档现算、不新增字段**；只进曲集、不进关卡 |
 | 版权治理 | `docs/audio-license.md` + `scripts/audio-similarity.js` | ✅ 完成 | 资产清单 + 生成参数 + 判定依据 + 红线；音程串（移调不变量）最长公共子串比对，阈值 8 音 |
 | 震动 | `services/haptics.ts` | ✅ 完成 | 仅失误与通关触发 |
 | 存档 | `store/useSaveStore.ts` + `services/storage.ts` | ✅ 完成 | zustand persist，key = `shuerte_save` |
-| 首页 | `pages/home/index` | ✅ 完成 | 谱纸首屏（五线谱 + 音符依次点亮）、宣传语、当前曲目（唱片常转，9s 一圈）、三卷进度、主按钮、拾星/收录/连续；无玩法长文案；导航栏标题置空，H5 端由 `useEffect` 兜底 `document.title` |
+| 首页 | `pages/home/index` | ✅ 完成 | **玩法优先**：品类行「舒尔特方格 · 眼力训练」+ 一行规则 + 3×3 演示盘（数字按 1→9 依次点亮、点过落 ♪）+ 主按钮提到首屏；三卷进度；配乐降级为一行（小唱片 + 曲名 + 段数）；底部统计为 星子/通关关卡/连续训练。导航栏标题置空，H5 端由 `useEffect` 兜底 `document.title` |
 | 关卡地图 | `pages/levels/index` | ✅ 完成 | 卷首总星进度、三卷签条（小令/中调/长调）、卷首卡、引子入口、两列关卡卡、锁态与解锁提示 |
 | 对局页 | `pages/game/index` | ✅ 完成 | 单行「曲名 · 卷名 关序」、环形计时（剩余 xx″ + ×失误徽章）、8 段谱线、引子引导语、倒计时/暂停/引子通关浮层、限时失败跳转、参数校验 |
-| 结算页 | `pages/result/index` | ✅ 完成 | 通关：星级动画 + 破纪录 + 挑战下一关；失败：用时/失误/完成度，只能重打 |
+| 结算页 | `pages/result/index` | ✅ 完成 | 通关：星级动画 + 破纪录 + 挑战下一关；失败：用时/失误/完成度，只能重打；**演奏回放**（见下一行） |
+| 演奏回放 | `components/RunReplay` + `utils/replay.ts` + `store/useRunStore.ts` | ✅ 完成 | 按当时盘面还原 size×size 格子，数字按**这一局的点击顺序**依次弹出（节奏由真实 `beats` 压缩到 1.1~3.2s、单步 ≥50ms），播完每格裂成 3 条墨屑飞散、空盘收成一行「♪ 弹完了 · 点一下重播」。**声音一次性按绝对时间排进音频图**（`unlockAudio()` → `getAudioTime()` → `playNote(midi, vel, when)`），不用逐个 setTimeout；`cues` 由 `replay.ts` 抽稀（>32 格隔一格响一个），音高复用对局的 `getNoteForValue`，力度按音数衰减；`playNote` 内部 `musicEnabled` 守卫自动尊重「演奏音」开关；交接数据只走内存 store |
 | 曲集页 | `pages/collection/index` | ✅ 完成 | 6 张唱片按顺序开卷（未至 / 未收录 / 已收录 / 金唱片四态）、汉字序号朱印、**回放的是玩家最好那一次的击键节奏**（`utils/beats.ts` 取该曲记录最长的一关）、回放中该条唱片转 3.6s 一圈；标题行右侧有「伴奏 开/关」即时开关；下方「名曲拾遗」区块按战绩解锁；音色文案由 `song.style` 派生（不再写死在档位上） |
 | 我的页 | `pages/mine/index` | ✅ 完成 | 演奏者统计卡（星/通关/场次/连续/金唱片）+ 声音（演奏音/伴奏/提示音/震动/音色）、画面两组设置 + 清空；「音符碎片」随安可曲占位一并移除 |
 | 全局配置 | `app.config.ts` / `styles/theme.scss` / 6 个 tabBar 图标 | ✅ 完成 | 青绿主题 |
@@ -131,7 +133,7 @@
 | 待办 | 所属里程碑 | 落点 | 备注 |
 | --- | --- | --- | --- |
 | 每日挑战（日期哈希种子，全员同题） | M2 | `utils/shuffle.ts` 加 seed 参数、`utils/gameEngine.ts` 传入 | 回访率最高的一步 |
-| 通关特效（格子依次消隐 + 粒子） | M2 | `pages/result` + 新组件 `ParticleLayer` | 能用 CSS 就不用 Canvas |
+| 通关特效（点完瞬间整盘消隐 + 粒子） | M2 | `pages/result` + 新组件 `ParticleLayer` | 结算页回放的「碎裂飞散」已落地（`RunReplay`），这里剩的是**点完那一刻**的整盘特效 |
 | 主题换肤 / 背景图案 | M2 | `styles/theme.scss` + `ThemeProvider` 组件 + 存档加 `settings.theme` | 变量已预留结构 |
 | 成就系统（6 枚徽章） | M2 | 新建 `utils/achievements.ts` + `data/achievements.ts` | 存档需加 `achievements: string[]` |
 | 新玩法：静默变位 | M2 | `types/game.ts` 加 mode，`data/levels.ts` 配置，引擎推进策略 | 倒序 / 双色交替已在档内后 6 关落地，只剩静默变位 |
@@ -174,7 +176,7 @@
 | `ERROR_PENALTY` | 150 ms | `utils/scoring.ts` | 罚时；对局页（引子引导语）、关卡页 footer、结算页都按 **2 位小数**读它（`formatSeconds(…, 2)` → `0.15″`），三处都已改成读常量，改数值即可 |
 | `ERROR_FLASH_MS` | 420 ms | `utils/gameEngine.ts` | 错误格子红闪时长；与 `GridCell` 的 `cellShake` 动画时长（0.3s）相关联 |
 | `RECENT_LIMIT` | 10 | `store/useSaveStore.ts` | 存档保留最近成绩条数；首页只展示 5 条 |
-| `TICK_INTERVAL` | 50 ms | `components/TimerBar/index.tsx` | 计时刷新频率 |
+| `TICK_INTERVAL` | 50 ms | `components/TimerRing/index.tsx` | 计时刷新频率（旧的 `TimerBar` 已改名为 `TimerRing`，环形进度 + 黑胶唱片三层） |
 | `SAVE_STORAGE_KEY` | `'shuerte_save'` | `services/storage.ts` | **改名字 = 老用户存档全部丢失**；加字段请走 persist `version` + migrate |
 | `SIZE_THRESHOLDS` | 3~8 每尺寸一组 gold/silver（3×3: 5″/8″、4×4: 10″/15″、5×5: 22″/32″、6×6: 38″/55″、7×7: 58″/82″、8×8: 82″/115″） | `data/levels.ts` | **每个尺寸都必须有阈值**，缺失会直接 throw；新增尺寸必须补一行。这组数字同时决定 `SIZE_TIME_LIMITS`（= silver × 1.15），调阈值会连带改限时 |
 | `SIZE_TIME_LIMITS` | 3~8 每尺寸一组（3×3: 12″、4×4: 17″、5×5: 37″、6×6: 63″、7×7: 94″、8×8: 132″） | `data/levels.ts` | 每关限时，口径是 **`silver` 阈值 × 1.15**（3×3 例外 ×1.5，因为新手要认格子）。**这个系数是「通关率旋钮」**：调大到 1.4 以上就人人能过，调小到 1.05 以下会让 7×7/8×8 变成硬门槛。新增尺寸必须补一行，否则 throw |
@@ -193,7 +195,7 @@
 | 圆形卡分区 | 第 k 圈 2k-1 格，每格是**带缝隙的圆角扇环** | `utils/circleLayout.ts` `buildCircleCells` | 靠 1+3+5+…=n² 正好容纳 size² 个数字；改分区方式要同时确认格子总数仍等于 size²。缝隙宽度见 `gapOf`（随圈厚自适应 0.7~1.5%），圆角用「半径在弧线两端回落」逼近 |
 | 图案卡轮廓 | 12 个形状 = **一条归一化多边形** | `data/patternShapes.json`（由 `scripts/gen-pattern-shapes.js` 生成） | 手写坐标画不出花瓣/齿轮齿/贝壳纹，所以用「圆 / 椭圆 / 胶囊 / 多边形」在生成脚本里拼，烘成轮廓写回 JSON。**改形状只改生成脚本再 `WRITE=1` 重跑，不要手改 JSON**；改完**必须**跑 `node scripts/preview-shapes.js` 确认「连通块=1」+ 各尺寸划分成功 |
 | 图案出场顺序 | `ORDER` 数组决定 12 个图案在卷三 12 关里的先后，与 `DESIGNS` 的定义顺序解耦 | `scripts/gen-pattern-shapes.js` 顶部 | 顺序必须与尺寸阶梯配对：下标 0/6 落 3×3、1/7 落 4×4……5/11 落 8×8。**小尺寸配整体性强的简单轮廓**（水滴 / 四角星），大尺寸才配细碎造型（齿轮 / 八角花）——3×3 只有 9 个大格子，配齿轮会把齿全吃掉。`ORDER` 与 `DESIGNS` 长度不等时脚本直接报错，改完必须 `WRITE=1` 重新生成 json |
-| 音频：声部上限 | 旋律 16 / 伴奏 24 | `services/audio.ts` | 两个池**分开淘汰**。合成一个池（旧版 10 声部）时伴奏和弦会把旋律音挤掉，表现是「和弦响了、旋律断了」 |
+| 音频：声部上限 | 旋律 **40** / 伴奏 24 | `services/audio.ts` | 两个池**分开淘汰**。合成一个池（旧版 10 声部）时伴奏和弦会把旋律音挤掉，表现是「和弦响了、旋律断了」。旋律池从 16 提到 40 是给结算页回放用的：回放**一次性排 32 个音**，池子小会把还没响的音 stop 掉 |
 | 音频：调度参数 | tick 30ms / lookahead 0.25s / 起播留白 0.15s | `services/audio.ts` | **墙钟决定「排哪些事件」，音频时钟决定「何时响」**。反过来用 `ctx.currentTime` 算 horizon，上下文被挂起时会死锁（currentTime 冻结 → 整首卡在第一个音）。lookahead 调小会让低端机漏拍 |
 | 音频：和声验收 | 强拍冲突 = 0（1/6/11 半音） | `scripts/analyze-songs.js` | 改口径等于改验收线。九度/十一度/十三度算色彩音、不报；弱拍上的冲突算经过音、只记不判 |
 | 音频：相似度阈值 | 连续 8 个音程 | `scripts/audio-similarity.js` | 8 音大约是一句能被认出来的长度；调到 6 会天天报警，调到 10 以上会漏掉真正的撞句 |
@@ -211,22 +213,33 @@
 | 唱片标签占比 | 42%（`Disc` 的 `.label`） | `components/Disc/index.module.scss` | 同时决定 ♪ 的可读性：标签小于 36% 时 22rpx 的音符会顶到边缘 |
 | 击键记录（beats） | 每关最多 64 个毫秒数 | `hooks/useGameEngine` 的 `beatsRef` → `submitResult(result, grade, beats)` | 只记**点对**的时刻，含罚时；失败局与引子关不写。36 关全满约 14KB，别往 `recent` 里塞（会翻 10 倍） |
 | 记录覆盖规则 | 星级 → 用时 → 失误 | `store/useSaveStore` 的 `isBetterRun` | **不满足就不覆盖**：这是「敢反复重玩」的前提，改成「最近一次为准」会让玩家刷新后不敢再玩 |
+| 回放节奏 | `MIN_TOTAL` 1100 / `MAX_TOTAL` 3200 / `MIN_STEP` 50ms / `SPARSE_OVER` 32 / `HOLD_MS` 320 / `POP_MS` 240 | `utils/replay.ts` | `MIN_STEP` 同时是「人能分辨相邻两音」的下限（<40ms 时 8×8 的 64 个音糊成一堵墙），**不是纯视觉参数**；`SPARSE_OVER` 控制大棋盘隔一格响一个（8×8 由 64 音降到 32 音）；`POP_MS` 必须与 `RunReplay` 的 `replayPop` 动画时长一致，否则格子还在弹、音已经排完 |
+| 回放排音方式 | `unlockAudio()` → `getAudioTime()` → `playNote(midi, vel, when)` 一次性排程 | `pages/result/index.tsx` 的 `handlePlan` | **不要改回「每格一个 setTimeout」**：结算页没有用户手势托底，AudioContext 会被挂成 suspended，`resume()` 异步期间前几个音就排空了（历史上两次「有动画没声音」都是这个原因）；绝对时间交给音频硬件，主线程卡不影响。resume 花掉的 lag 要补回来，否则声画越走越偏 |
 
 **星级规则**（`utils/scoring.ts`）：用时 ≤ gold 阈值 → 3 星；≤ silver → 2 星；否则 1 星；长调卷 ≤ platinum（= gold × 0.85）→ 4 星；**0 失误额外 +1 星，上限是该关满星（小令 3 / 中调 4 / 长调 5）**。满星只在零失误时拿得到，速度与精准是两条并行路线，改规则时不要破坏这一点。
 
-**存档契约**（`shuerte_save`，`SAVE_VERSION = 4`）：
+**存档契约**（`shuerte_save`，`SAVE_VERSION = 5`）：
 
 ```
+version = 5
 stars{ levelId→最高星 } bestTimes{ levelId→最快ms } bestErrors{ levelId→最少失误 }
-bestRuns{ levelId→{ stars, elapsed, errors, beats[] } }   ← 「最好那一次」的完整记录
+grades{ levelId→S/A/B/C }                                  ← 最好那一次的演奏评级（不进星级）
+bestRuns{ levelId→{ stars, elapsed, errors, beats[] } }    ← 「最好那一次」的完整记录
 totalGames  streakDays  lastPlayedDate  recent[≤10]  tutorialDone
-settings{ sound, music, haptics, colorful, timbre }
+settings{ sound, music, accompaniment, haptics, colorful, timbre }
 ```
 
-**回放契约**（曲集「我的演奏」）：
+**回放契约**（两个回放，数据源不同，别混）：
+
+| | 结算页回放 | 曲集「我的演奏」 |
+| --- | --- | --- |
+| 数据来源 | **本局内存**（`store/useRunStore` 交接 `values` + `beats`），不读存档 | 存档 `bestRuns[levelId].beats` |
+| 播的是 | 刚打完这一局 | 该曲 6 关里记录最长的那一条（8×8 通了正好 64 音） |
+| 节奏 | 压到 1.1~3.2s、单步 ≥50ms、>32 格抽稀（`utils/replay.ts`） | 保留真实节奏，整体减 `beats[0]`，超出记录的音按曲目 BPM 续播 |
+| 声音 | `playNote(midi, vel, when)` 一次性绝对时间排程，无伴奏 | lookahead 调度，带四声部伴奏 |
+
 - `beats` = 那一次通关时**每次点对的 `getElapsed`**（ms，含罚时，所以点错后的停顿也被还原），长度 = 该关数字个数
 - 覆盖规则 `isBetterRun`：**星级高者胜 → 同星级比用时短 → 再比失误少**；不满足就**不覆盖**，打崩了不会冲掉最好记录
-- 曲集整曲回放取「该曲 6 关里记录最长的那一条」（8×8 通了正好 64 音），不足 64 音的部分按曲目 BPM 续播；回放时整体减去 `beats[0]`，开局发呆的几秒不算演奏
 - 失败局、引子关不写档，因此不产生 beats
 
 **音效 key**：`tick`（倒计时/恢复）、`click`（点对）、`error`（点错）、`success`（结算页）。
@@ -322,7 +335,8 @@ settings{ sound, music, haptics, colorful, timbre }
 | 图案线条在交汇处有 1~2px 缺口 | `buildSeamPolylines` 在「度数 ≠ 2」的顶点把线断成多段，每段独立做 DP 简化 + Chaikin；端点不动，但极短的段平滑后可能缩到几乎看不见 | 真机尺寸（375px）下不可见，放大 2 倍才看得出。要彻底消除得把分叉点也纳入平滑（会牺牲交汇处的锐度），不值得 |
 | 图案线条偶有短毛刺 | 两个标签交界处存在只有 2 个像素点的极短边，简化后保留下来画成小短线 | 真机不可见；若在意可在 `buildSeamPolylines` 末尾按「归一化长度 < 0.4」过滤，代价是真实的短边也会被吞掉 |
 | `.env` 里有 API key | 项目根目录 `.env` 存了 `DASHSCOPE_API_KEY`（仅用于开发期用 qianwen-vision 读参考图/截图核验），当前项目未接入 git | `git init` 时**必须**先把 `.env` 加进 `.gitignore` |
-| H5 预览的视口 | `src/index.html` 把 `html { font-size: 18px }` 写死，rpx 换算固定；Chrome 无头窗口最小 500px，直接 `--window-size=375` 会得到「500 布局裁到 375」的错位截图 | 用 `scripts/cdp-shot.js`（CDP `setDeviceMetricsOverride` 覆盖成 375×812）核对 |
+| H5 预览的视口 | `src/index.html` 里根字号 = 视口宽 / 20（750rpx 恒等于一屏宽），所以布局随屏幕等比缩放；Chrome 无头窗口最小 500px，直接 `--window-size=375` 会得到「500 布局裁到 375」的错位截图 | 用 `scripts/cdp-shot.js`（CDP `setDeviceMetricsOverride` 覆盖成 375×812，`CDP_PORT` 可改端口）核对 |
+| 上传平台只收白名单后缀 | H5 托管平台拒绝 `.txt` 等类型，而 TerserPlugin 默认 `extractComments: true` 会吐 `*.js.LICENSE.txt`（H5 和小程序都有） | `config/index.ts` 的 `disableLicenseTxt(chain)` 把 `extractComments` 关掉（只能走 `webpackChain` tap，`terser.config` 改不到）；`npm run build:h5` 末尾自动跑 `scripts/pack-h5.js`：删掉非白名单文件 + 压成 `dist/h5.zip`（`index.html` 在根目录，零依赖手写 ZIP） |
 | **⚠️ H5 预览服务会掉线（报「应用程序异常」）** | 预览壳的云沙箱会话会失效（`.pai/pai.log` 里表现为每 10s `WebSocket ... Unexpected server response: 404`），随后 `preview-server.js` 在 `updateCloudDev` 时抛 `WebSocket is not open: readyState 0 (CONNECTING)` 直接崩溃。此时首页/关卡页等**已加载并缓存**的 chunk 仍能显示，只有需要新拉路由 chunk 的页面（如对局页）会弹「应用程序异常」——错误信息是 `Loading chunk src_pages_game_index_tsx failed.`，堆栈是 `ChunkLoadError` | **这不是业务代码 Bug**。恢复办法：重跑 §0 的 preview-server 命令（端口复用 57544，URL 不变），**然后必须重新打开/硬刷新预览页**（重建后 chunk hash 变了，旧标签页持的是失效构建）。**切勿删 `.pai/pai-preview-server.lock`** |
 
 **关键决策（改代码前先理解为什么）**
@@ -331,10 +345,12 @@ settings{ sound, music, haptics, colorful, timbre }
 | --- | --- |
 | 点错要罚时（`ERROR_PENALTY`，当前 150 ms），而不是只记次数 | 只记错误数会被「乱点流」绕过（手速够快蒙也能过）。加罚时后乱点成本高于收益，玩家自然转向「看准再点」，这才是舒尔特的训练价值。**注意：罚时数值当前是 150 ms，而最初的设计口径是 1500 ms**，改回时需同步 README 与关卡页 footer 文案 |
 | 0 失误额外 +1 星（上限为该关满星 3/4/5） | 让「手速」和「精准」成为两条并行追求路线，避免只有一种最优玩法；满星只在零失误时拿得到，高难档有 4~5 颗星的进步空间 |
-| 计时用 `Date.now()` 差值，不用定时器累加 | 小程序定时器会漂移、切后台会被节流；定时器只负责刷新显示 |
-| 切后台自动暂停（`useDidHide`） | 否则「切出去等时间」的玩法会污染成绩 |
+| 计时用 `Date.now()` 差值，不用定时器累加 | 小程序定时器会漂移、切后台会被节流；定时器只负责刷新显示 || 切后台自动暂停（`useDidHide`） | 否则「切出去等时间」的玩法会污染成绩 |
 | 方格用 `padding-bottom` 百分比撑正方形 | 只依赖容器宽度，3×3~8×8 与所有卡片造型共用一套布局，不写死 px |
-| 计时刷新隔离在 `TimerBar` 内部 | 避免 20fps 的刷新把 49 个格子的组件树一起重渲染 |
+| 一屏页用「`--app-height` + `min-height: 100%`」铺满，不用 `100vh` | 移动端 `100vh` 是地址栏收起后的高度，比实际可视区高一截：拿它铺满会把底部裁掉，表现就是「内容偏上、下面空一段、tabBar 看不见」。`index.html` 用 `visualViewport.height` 算出 `--app-height`，页面高度由 `body > #container`（高度=真实可视区）→ `.taro-tabbar__panel`（flex 扣掉 tabBar）→ `#app` → `.taro_page` 逐层 100% 给出，所以页面里只用 `@include page-viewport`（`min-height: 100%`） |
+| 根字号 = 视口宽 / 20，不锁死 | rpx 编译成 rem 时 750rpx = 20rem，令 1rem = 宽/20，750rpx 就恒等于一屏宽，整站按比例缩放。旧实现把根字号锁死 18px（等于按 360px 定死设计稿），宽屏偏小、窄屏溢出。桌面端列宽锁 480px（`--app-width`）并居中 |
+| 页面滚动容器是 `.taro_page`，`overflow-y` 必须从 Taro 默认的 `scroll` 改成 `auto` | `scroll` 会常驻滚动条，一屏放得下的页面也有一条；`auto` 只在真的溢出时才出现 |
+| 计时刷新隔离在 `TimerRing` 内部 | 避免 20fps 的刷新把 49 个格子的组件树一起重渲染 |
 | 音效用 Node 合成后内联 base64 | 避免引入二进制资源、避免改动构建配置加静态资源目录，且随时可调参重生成 |
 | 失败只由「超时」触发，不设错误次数上限 | 错误已经有罚时成本，再加次数上限会让同一次失误被罚两遍；限时是唯一的失败线，规则更好理解 |
 | 尺寸逐关递增（3×3 → 8×8），而不是每档固定尺寸 | 每关都有看得见的难度变化，第一关 5 秒就能通关，新手不会在开局流失 |
@@ -374,6 +390,10 @@ settings{ sound, music, haptics, colorful, timbre }
 
 | 日期 | 变更 | 验证 |
 | --- | --- | --- |
+| 2026-11-02 | **文档全量对齐代码**（用户要求「更新所有 md 文档」）：① **`game.md` 归位** —— 文件原先在项目根目录，但 `README.md` / 本文 §10 / `docs/game-design.md` 三处链接都指向 `docs/game.md`，它自己末尾写的也是 `../README.md` 与 `./audio-license.md`，四处链接全断；移入 `docs/` 后全部成立；② **修本文 §4 三处与代码不符** —— `SAVE_VERSION` 4 → **5**（v5 是加 `settings.accompaniment` 那次）、旋律声部上限 16 → **40**（结算页一次性排 32 音，池子小会把没响的音 stop 掉）、`TICK_INTERVAL` 的位置 `components/TimerBar` → **`TimerRing`**（组件早已改名，`TimerBar` 目录不存在）；③ **§4 新增两行常量**：「回放节奏」（`MIN_STEP` 50ms / `SPARSE_OVER` 32 / `MAX_TOTAL` 3200）与「回放排音方式」（绝对时间一次性排程，别再改回逐格 setTimeout）；④ **`README.md`** 补上 11-02 新增的 `components/RunReplay` / `utils/replay.ts` / `store/useRunStore` 三个模块、新增「结算页演奏回放」机制段、`TimerBar` → `TimerRing`、首页描述由「五线谱浮音」改为「3×3 演示盘 + 玩法优先」、脚本清单补 `shot-replay.js` 与 `seed-save.js`、存档字段补 `version: 5`；⑤ **`docs/game.md`** 功能状态补「结算页演奏回放」、评级公式按代码写成 `(Perfect + Good×0.5) / 总音数`（原文档写成「Perfect 占比」，与实现不符）、引子补「60s 兜底但不判失败」、FAQ 补「结算页回放与曲集回放的区别」；⑥ **历史设计文档加「落地后修订」**（`design-v2.md` / `audio-system-design.md` / `tech-plan.md` / `game-design.md` / `audio-license.md`）—— 不改写当时的结论，只在末尾标注实际实现值与被废弃项（声部池 12/16→40/24、lookahead 25ms/0.2s→30ms/0.25s、安可曲与音符碎片占位已整体移除） | 全量核对：`SAVE_VERSION=5`、`MAX_MELODY_VOICES=40`、`MIN_STEP=50`、`SPARSE_OVER=32` 逐项读源码确认；`ls docs/*.md` 确认 `docs/game.md` 就位、根目录只剩 `AGENTS.md` / `README.md`；5 份文档内部的相对链接（`../README.md`、`./game.md`、`./audio-license.md`）逐条落到实际文件；本次仅改文档，未动代码，无需重跑构建 |
+| 2026-11-02 | **回放改成「绝对时间连奏」+ 首页按钮下移**（用户反馈「还是没声音；点击顺序只是个动画，声音连起来播放即可；大棋盘每 2 格响一个」）：① **根因** —— 上一版是「每格一个 `setTimeout` → `playNote()`」，但结算页的音没有用户手势托底，iOS 微信 / 浏览器把 `AudioContext` 挂成 suspended，`resume()` 是异步的，等它 resolve 时前几个音已经排空；且碎片动画最卡的那几百毫秒正好落在回放后半段，定时器挤成一团甚至丢音；② **改法** —— 新增 `unlockAudio()`（显式 resume 并 **await**）与 `getAudioTime()`（拿 `currentTime`），结算页拿到整条 `cues` 后**一次性按绝对时间** `playNote(midi, vel, when)` 排进音频图，时序交给音频硬件，主线程怎么卡都不影响；resume 耗掉的 lag 会补回来；③ **抽稀** —— `buildReplayPlan` 增加 `cues`（>32 格隔一格取一个），8×8 由 64 音降到 32 音、间隔 ~100ms；④ **声部池** 旋律 16→40：一次性排 32 个音时，池子太小时后建的音会把还没响的音 stop 掉；⑤ `RunReplay` 的 `onCue` 换成 `onPlan(cues)`（组件只交节奏表，不碰音频服务）；⑥ **首页**「继续挑战」从演示盘下移到配乐条下面（`startSection` 独立成块） | `tsc --noEmit` + `build:h5` 通过；探针实测 3×3 = 9 音 / 间隔 138ms / 跨度 1100ms，8×8 = 32 音 / 间隔 100ms / 跨度 3100ms（抽稀生效）；首页 375×812 截图确认按钮在曲子条之下、tabBar 无遮挡 |
+| 2026-11-02 | **结算页回放出声**（用户反馈「展示了演奏顺序但没有声音」）：根因是回放从头到尾只有 CSS 动画、没有任何音频调度（不是被静音）。① `utils/replay.ts` 把 `MIN_STEP` 16→**50ms**、`MAX_TOTAL` 2200→**3200ms** —— 这个下限同时是「人能分辨相邻两音」的门槛，原来的 16ms 会让 8×8 的 64 个音糊成一堵墙；② `RunReplay` 新增 `onCue(value)` prop（组件仍不碰 service 层）：视觉继续走 `animation-delay`，声音用同一份 `delay` 起定时器逐个回调，`LEAD_MS = 560ms` 让通关音先响完，声画共用同一起点；③ 结算页补 `initAudio()`（从分享/历史直进时 AudioContext 可能是 suspended），`onCue` 用 `getNoteForValue` 取音高（与对局完全同一条规则，听到的就是刚才那一遍），力度按音数衰减（64 音时 0.45）避免叠爆；开关不用另判 —— `playNote` 内部 `musicEnabled` 守卫会自动尊重「演奏音」关闭；④ `shot-replay.js` 加音频探针：拦 `AudioContext.prototype.createOscillator` 记录音数与间隔，并在跑完后主动 `process.exit` 避免挂住 | `tsc --noEmit` + `build:h5` 通过；探针实测 3×3 = 27 振荡器（9 音 × 3 分音）间隔 ~137ms、8×8 = 192（64 音 × 3）间隔 ~47ms，音高 262~1978Hz；碎裂取帧视觉无回归 |
+| 2026-10-30 | **结算页「演奏回放 + 碎裂」+ 首页改为玩法优先**（用户两条需求：① 结算页按自己的演奏顺序播放数字、播完数字碎掉；② 首页喧宾夺主，主体是舒尔特方格，很多人关掉声音只练眼力）：① **数据通道** —— `EndPayload` 增加 `values`（盘面顺序的数字），新建 `store/useRunStore.ts` 做「对局 → 结算」的一次性交接（刻意不持久化：只服务刚打完这一局，且 8×8 的 64 个时间戳塞不进微信 path）；② **节奏编排** —— 新建纯函数 `utils/replay.ts`：顺序由玩法推导（正序 `v-1`、倒序 `total-v`），时间轴保留击键的相对比例、整体压到 1.1~2.2s、相邻单步补足 16ms，输出每格 `delay` 与 `playMs`；③ **动画** —— 新建 `components/RunReplay`：每格写 `animation-delay` 让 CSS 合成层自己跑（64 格只渲染一次，不进 setData 循环），播完 `shatter` 阶段每格挂 3 片 `clip-path` 墨条向外飞散，随后空盘收成一行「♪ 弹完了 · 点一下重播」，点一下可重播（`key` 重挂载）；④ **首页** —— 五线谱 + 飘动音符换成 3×3 演示盘（数字按 1→9 依次点亮、点过落 ♪、点一下直接开局），标题上加品类行「舒尔特方格 · 眼力训练」、宣传语换成规则，主按钮从页面底部提到首屏，当前曲目从大卡片降级为一行（小唱片 + 曲名 + 段数），底部「收录曲目」换成「通关关卡」，印章由「谱」改「眼」 | `tsc --noEmit` + `build:h5` 通过；`shot-replay.js` 取帧核对 3×3（第 700ms 只出 8 格、第 1200ms 满盘 → 碎裂 → 收起）与 8×8（64 格）两档；首页 375×812 截图核对 |
 | 2026-10-30 | **小程序头像（144×144）**：新增 `docs/avatar/avatars.html`（5 个 576×576 矢量母版，全部按 `theme.scss` 取色：宣纸米白 / 朱砂 `#b23a2b` / 淡墨 / 赭金 `#dfa22e` / 落日橙 `#e85d2a`）、`scripts/render-avatars.js`（CDP 逐卡截图出母版）、`scripts/build-avatar-assets.py`（LANCZOS 缩到 144×144 → 导出 PNG+JPG，并拼「288/144/72 + 圆形裁切」对照图 `docs/avatar/preview.png`）。五版：A 朱砂大印（印文右列「眼力大」左列「作战」，四角淡九宫数字 + 印角金 ♪）、B 九宫窗格（3×3 数字、中心格换成 ♪、朱砂名牌）、C 黑胶唱片（朱砂标签 + 沟槽上 1~8 数字环 + 底部题名）、D 立轴卷题（竖排题名 + 淡数字 + 落款小印）、E 墨底金格（金线九宫 + 金色 ♪ + 纸白题名）。成品在 `docs/avatar/out/`，10 个文件均 5~21KB（限 2MB） | PIL 复核全部 144×144、RGB；`docs/avatar/preview.png` 肉眼核对 288/144/72 三档可读性与圆形裁切无遮挡 |
 | 2026-10-30 | **音频系统重做**（用户四条需求：音符对不对 / 曲集加伴奏 / 版权风险 / 加公有领域名曲）：① **修音** —— `gen-songs.js` 的调性表从「只按主音查」改为 `(root, mode)` 双键（原来 `齿轮` 是 d 小调却标成「D 大调」、`夜航` 是 e 小调却标成「E 大调」）；B 段和声错位是本轮最严重的 bug —— 旋律按 `prog.reverse()` 写、和弦轨却仍用正序，bar 8–11 每个强拍都落在别的和弦上，改为 `progAt(prog, bar)` 让两者共用同一份分段进行；新增 `removeFriction` 消掉与和弦根音构成 1/6/11 半音的三类冲突（九度/十一度/十三度作为色彩音保留，全吸附到三和弦会让旋律变木）；低音轨从「每小节重复根音」改为走动低音（根–五–根–三）。② **双色关旋律缺音** —— `getNoteForValue` 两条轨共用一个下标，偶数格把旋律的下标也推走了，旋律第 2/4/6… 个音永不响；改为奇偶各自独立指针后是连续 32 音。③ **伴奏引擎** —— 新建 `services/accompaniment.ts`（只算数据：低音/铺底/琶音/轻击四声部 + 分段动态），`audio.ts` 拆出 `scheduleVoice` 与两条总线（旋律 0.90 / 伴奏 0.55 → 低通 → 同一限幅器），旋律与伴奏走同一个 lookahead 循环、全部用 `osc.start(when)` 绝对时间；**调度改用墙钟决定「排哪些事件」**，因为用 `ctx.currentTime` 算 horizon 在上下文被挂起时会死锁（currentTime 冻结 → 整首卡在第一个音）；伴奏按 `barTimes[b] = noteTimes[b*4]` 跟随玩家击键、**不做量化**。④ **名曲** —— 新增 `data/classics.ts`（欢乐颂/小步舞曲/致爱丽丝/卡农/绿袖子/茉莉花，自行记谱编配）与 `utils/classics.ts`（解锁只认战绩：24/48/72/96 星、1 张金唱片、8 关 S，全部由存档现算、不新增字段），曲集页下方加「名曲拾遗」区块；名曲只进曲集、不进关卡（进关卡要重算 `starGate` 与 `MAX_STARS=144` 的曲线）。⑤ **版权治理** —— `docs/audio-license.md` 记资产清单/生成参数/判定依据/红线，`scripts/audio-similarity.js` 用音程串（移调不变量）做最长公共子串比对、阈值 8 音。⑥ **顺带清理** —— 曲集的 `TIER_LABELS` 写死「八音盒/钢琴/电钢」但 s3a 其实是钢琴、回放还用的是用户设置音色，改为由 `song.style` 派生并在回放时临时切音色；旋律/伴奏声部分池（16/24）互不抢占；「安可曲 + 音符碎片」占位整体移除（`fragments` 与 `addFragments` 从存档删掉，我的页那一列改为金唱片），存档升 v5 加 `settings.accompaniment` | `tsc --noEmit` + `build:h5` 通过；`analyze-songs.js` 原创 6 首强拍冲突 0、名曲 6 首强拍冲突 0；`audio-similarity.js` 12 首全部 PASS；CDP 实测见 §3.3 |
 | 2026-10-30 | **代码清理 + 文档拆分**（用户要求「删除无用代码、补充对应的 md 文档、拆分 readme 到 game.md、readme 只留技术开发相关」）：① 删掉 6 个完全无引用的导出 —— `services/audio.ts` 的 `getTimbre`、`store/useSaveStore.ts` 的 `selectTotalStars`、`utils/format.ts` 的 `formatRecordTime` / `isToday` / `todayKey`（连带整个 `dayjs` import，该文件只剩 `formatSeconds`）、`utils/music.ts` 的 `getPlayableNoteCount` / `midiToName`；② 收敛 5 处纯内部 `export` —— `levels.ts` 的 `GUIDE_LEVEL_ID`、`audio.ts` 的 `playChord`、`music.ts` 的 `getSongStep`、`silhouette.ts` 的 `getShapeOutline` / `toClipPolygon`；③ **刻意保留** `PatternShape` / `ShapePoint` / `SilhouetteCell` / `SaveState` / `GamePhase` / `CircleCellGeometry` / `GameEngineApi` / `PlaySongOptions` 的 `export` —— 它们出现在导出函数签名或 store 泛型里，取消导出会让公开 API 出现「无法命名的类型」，属于倒退；④ 删除孤立脚本 `scripts/convert-svg-to-png.js`（一次性任务已完成，`gen-tabbar-icons.js` 已覆盖）、`scripts/analyze-ref3.py`（一次性参考图分析），删除 `src/assets/tabbar/` 下 6 个未被引用的 `.svg`（`app.config.ts` 只用 PNG，留着容易被误当成图标源）；⑤ **文档拆分**：新建 `docs/game.md`（规则 / 卷位与卡片造型 / 星级规则 / 关卡数值表 / 功能状态 / 里程碑 / 玩家常见问题），`README.md` 只留技术栈、快速开始、部署、其他命令、开发流程、目录结构、架构与核心机制、常见改动指引、已知限制；⑥ 顺带修正 README 里三处过时内容 —— 关卡数值表更新为 `SIZE_THRESHOLDS` 的 5/8、10/15、22/32、38/55、58/82、82/115 秒与限时 12/17/37/63/94/132 秒，「已点数字只淡成墨灰」改为「只落一枚 ♪、底色与数字色都不变」，「限时 = 2 星线 × 1.5」改为 ×1.15（3×3 例外），收紧系数由「最低 70%」改为实际最紧的 85%（3 卷 × 2 轮 = 6 轮 × 3%）；⑦ `AGENTS.md` §4 新增「图案出场顺序」常量行（`ORDER` 与尺寸阶梯的配对约束），§10 文档索引补 `docs/game.md` 与三份文档的分工说明，§2 修正「星星总数是 select 出来的」的过时说法 | `npx tsc --noEmit` 通过（删除后无残留引用）；全项目 grep 确认 6 个删除项无任何调用点、`.svg` 无任何引用；`npm run build:h5` 通过 |

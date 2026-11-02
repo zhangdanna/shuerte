@@ -2,8 +2,9 @@
 
 .page {
   box-sizing: border-box;
-  min-height: 100vh;
-  padding: $spacing-xl $page-padding $spacing-lg;
+  @include page-viewport;
+  padding: $spacing-xl $page-padding 0;
+  @include page-bottom-space;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -265,7 +266,9 @@
 // ============ 操作 ============
 .actions {
   width: 686rpx;
-  margin-top: $spacing-lg;
+  // 内容撑不满一屏时按钮落到屏幕底部：一屏页不留一段空纸
+  margin-top: auto;
+  padding-top: $spacing-lg;
 }
 
 .primaryBtn {
@@ -327,7 +330,8 @@
 
 // ============ 异常兜底 ============
 .emptyPage {
-  min-height: 100vh;
+  box-sizing: border-box;
+  @include page-viewport;
   padding: 0 $page-padding;
   display: flex;
   flex-direction: column;

@@ -2,6 +2,7 @@
 
 > 版本：v1 ｜ 2026-10-30 ｜ 范围：**不改玩法、不改关卡配置、不改判定与计时**
 > **状态：已实施 ✅** —— P0 修音 / P1 伴奏 / P2 名曲 / P3 版权与验收 全部落地。§7 的 4 个决策均已按「我的建议」执行。落地结果见 [AGENTS.md](../AGENTS.md) §3 台账与 §9 变更日志；版权结论见 [audio-license.md](./audio-license.md)。
+> **2026-11-02 补记**：结算页演奏回放也接进了这套音频系统（绝对时间一次性排程 + 抽稀），**落地值与本文的提案值有几处不同**（声部池、lookahead 周期等），逐条对照见文末 [§8 实施后修订](#8-实施后修订2026-11-02-校)。
 
 ---
 
@@ -135,7 +136,7 @@ return isMelody ? song.melody[idx] : song.bass[idx];
 
 `playNote` 的所有发声体共用一个 `voices` 池，上限 `MAX_VOICES = 10`。回放时每 4 个音塞 3 个和弦音进去，密集处会把旋律音挤掉（`voices.shift()?.stop()`）。加了伴奏后这个问题会放大 3 倍。
 
-**修法**：拆 `melodyVoices`（上限 12）/ `compVoices`（上限 16）两个池，各自淘汰，互不抢占。
+**修法**：拆 `melodyVoices` / `compVoices` 两个池，各自淘汰，互不抢占。（提案值是 12 / 16；**落地最终是旋律 40 / 伴奏 24**，见 §8）
 
 ### 2.7 修复后的验收线
 
@@ -202,7 +203,7 @@ compVoices ───┴─► compBus (0.55) ─► lowpass ────┤
 
 **改造**：
 
-- 一个 25ms 的 lookahead 循环，提前 0.2s 把事件排进音频图；
+- 一个 **30ms** 的 lookahead 循环，提前 **0.25s** 把事件排进音频图（提案是 25ms / 0.2s，落地值见 §8）；
 - 旋律与伴奏**全部**用 `osc.start(when)` 的绝对时间，`when` 来自 `ctx.currentTime + offset`；
 - `playNote(midi, velocity, when?)` 加一个可选绝对时间参数（不传 = 现在的行为，对局页零改动）；
 - UI 进度条仍用 `setTimeout` 近似回调，误差 ±20ms 对进度条无意义。
@@ -327,7 +328,7 @@ export interface ClassicSong extends SongConfig {
 | `scripts/gen-songs.js` | 调性表改 `(root, mode)`；chords 按段落取进行（B2）；hook 写入后做摩擦消除；bass 改走动低音 |
 | `src/data/songs.ts` | 重新生成（`node scripts/gen-songs.js`） |
 | `src/utils/music.ts` | 双色关改双指针 |
-| `src/services/audio.ts` | 声部拆池（melody 12 / comp 16） |
+| `src/services/audio.ts` | 声部拆池（melody / comp，**落地为 40 / 24**） |
 | `scripts/analyze-songs.js` | **新增**，把 §1.2 的体检固化成可复跑脚本 |
 
 ### P1 伴奏（1–1.5 天）
@@ -376,3 +377,39 @@ P2 纯增量，删区块即可。
 | 4 | 双色关修法 | **旋律连续 32 音**（推荐，听得出曲调） | 保持现在的"隔音跳"，只把低音轨换成走动低音 |
 
 确认后我按 P0 → P1 → P2 → P3 顺序做，每批做完给你跑一次 `analyze-songs.js` 的体检数据 + 曲集回放的截图验收。
+
+---
+
+## 8 实施后修订（2026-11-02 校）
+
+### 8.1 提案值 vs 落地值
+
+| 项 | 本文提案 | 实际落地 | 为什么改 |
+| --- | --- | --- | --- |
+| 声部池 | 旋律 12 / 伴奏 16（§2.6、§6） | **旋律 40 / 伴奏 24** | 12 不够：曲集整曲回放一次要排 64 音，池子小会把还没响的音 `stop` 掉；40 是给结算页回放「一次性排 32 音」留的余量 |
+| lookahead | 25ms 周期 / 提前 0.2s（§3.3） | **30ms / 0.25s**，另加起播留白 0.15s | 30ms 少一点唤醒开销，0.25s 给低端机留余量；起播留白避免第一个音被上下文 resume 吃掉 |
+| 调度时钟 | 用 `ctx.currentTime + offset` 算 horizon（§3.3） | **墙钟决定「排哪些事件」，音频时钟决定「何时响」** | 反过来用音频时钟算 horizon，上下文被挂起时会死锁（`currentTime` 冻结 → 整首卡在第一个音） |
+| 段落动态 | 8–11 段 Pad 力度 +20%（§3.2） | 实现为「8–11 全开（加轻击）」 | 数值没细调，按听感定 |
+| 名曲 | 6 首 + 24/48/72/96 星门槛（§5.2） | 完全一致 | — |
+| 存档版本 | 4 → 5（§3.5） | 一致（`SAVE_VERSION = 5`） | — |
+
+### 8.2 新增：结算页演奏回放（2026-11-02）
+
+回放不在原方案范围内（原方案只做曲集回放），但它复用了同一套合成与总线：
+
+- **一次性绝对时间排程**：`unlockAudio()`（显式 resume 并 **await**）→ `getAudioTime()` 拿 `currentTime` → 对整条 `cues` 逐个 `playNote(midi, vel, when)`。**不用逐格 `setTimeout`**：结算页的音没有用户手势托底，`AudioContext` 会被挂成 suspended，`resume()` 异步期间前几个音就排空了；碎片动画最卡的那几百毫秒又正好压在回放后半段。
+- **resume 的 lag 要补回来**：`when = base + atMs/1000 - lag + 0.06`，否则声画越走越偏。
+- **抽稀**：`utils/replay.ts` 的 `SPARSE_OVER = 32`，超过 32 格隔一格响一个（8×8 由 64 音降到 32 音、间隔约 100ms）；`MIN_STEP = 50ms` 同时是「人耳分辨相邻两音」的下限。
+- **力度**：按音数衰减（`cueVelocity` 夹在 0.4~0.72），64 音时约 0.45，避免叠爆。
+- **开关**：不另判——`playNote` 内部有 `musicEnabled` 守卫，关掉「演奏音」回放自动静音。
+- **重播**：每次排程前先 `stopAllNotes()`，否则上一轮还没响完的音会和新的叠在一起。
+- **降级**：没有 WebAudio 时退回定时器逐个敲（`playNote` 内部会退成 click 提示音）。
+
+### 8.3 验证方式（音频探针）
+
+`scripts/shot-replay.js` 拦 `AudioContext.prototype.createOscillator` 记录振荡器与间隔，跑完打印「捕获音数 / 平均间隔 / 音高范围」。两个坑：
+
+- `Page.addScriptToEvaluateOnNewDocument` 在 Taro H5 页面里注入的原型补丁**不生效**，要等页面 load 完再用 `Runtime.evaluate` 打补丁；
+- 改成一次性排程后，「进结算页再清空记录」会把刚排好的整批抹掉，正确姿势是**清空后点一下盘面重播**再采。
+
+实测：3×3 → 9 音 / 间隔约 138ms / 跨度 1100ms；8×8 → 32 音 / 间隔约 100ms / 跨度 3100ms。

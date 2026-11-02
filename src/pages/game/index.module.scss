@@ -2,8 +2,9 @@
 
 .page {
   box-sizing: border-box;
-  min-height: 100vh;
-  padding: $spacing-md $page-padding $spacing-lg;
+  @include page-viewport;
+  padding: $spacing-md $page-padding 0;
+  @include page-bottom-space;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -288,7 +289,7 @@
 
 // ============ 异常兜底视图 ============
 .emptyPage {
-  min-height: 100vh;
+  @include page-viewport;
   padding: 0 $page-padding;
   display: flex;
   flex-direction: column;

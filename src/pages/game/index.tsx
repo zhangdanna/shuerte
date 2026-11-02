@@ -8,6 +8,7 @@ import { EndPayload, useGameEngine } from '@/hooks/useGameEngine';
 import { MODE_LABELS, getLevelById } from '@/data/levels';
 import { getSongOrDefault } from '@/data/songs';
 import { useSaveStore } from '@/store/useSaveStore';
+import { useRunStore } from '@/store/useRunStore';
 import { calcStars, ERROR_PENALTY } from '@/utils/scoring';
 import { getCurrentTarget, getDoneCount } from '@/utils/gameEngine';
 import { formatSeconds } from '@/utils/format';
@@ -70,6 +71,16 @@ const GameContent: React.FC<{ level: LevelConfig }> = ({ level }) => {
         return;
       }
       const grade = payload.performance.grade;
+      // 把这一局的盘面与击键节奏交给结算页，用于「演奏回放」（只走内存，不进存档）
+      useRunStore.getState().setRun({
+        levelId: level.id,
+        size: level.size,
+        mode: level.mode,
+        values: payload.values,
+        beats: payload.beats,
+        done: payload.done,
+        failed: payload.kind === 'failed'
+      });
       // 限时内未完成：不写存档、不解锁下一关，只能重打本关
       if (payload.kind === 'failed') {
         Taro.redirectTo({

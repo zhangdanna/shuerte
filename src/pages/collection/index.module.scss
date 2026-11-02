@@ -2,8 +2,9 @@
 
 .page {
   box-sizing: border-box;
-  min-height: 100vh;
-  padding: $spacing-lg $page-padding 160rpx;
+  @include page-viewport;
+  padding: $spacing-lg $page-padding 0;
+  @include page-bottom-space;
   background-color: $paper-0;
   @include paper-grain;
 }

@@ -4,6 +4,8 @@ node_modules
 # 构建产物
 # dist
 output
+# 每次 build 都会重打的压缩包，别进仓库
+dist/h5.zip
 
 # 预览服务
 .pai
@@ -31,5 +33,4 @@ npm-debug.log*
 .env*
 *.key
 .workbuddy-ai
-dist/h5-check
 .claude

@@ -24,7 +24,7 @@ const os = require('os');
 const path = require('path');
 
 const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
-const PORT = 9333;
+const PORT = Number(process.env.CDP_PORT || 9333);
 
 const args = process.argv.slice(2);
 const url = args[0];
@@ -84,16 +84,22 @@ class Cdp {
 
 const run = async () => {
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cdp-shot-'));
-  const chrome = spawn(CHROME, [
-    '--headless=new',
-    '--disable-gpu',
-    '--hide-scrollbars',
-    '--no-first-run',
-    '--no-default-browser-check',
-    `--remote-debugging-port=${PORT}`,
-    `--user-data-dir=${userDataDir}`,
-    'about:blank'
-  ]);
+  const chrome = spawn(
+    CHROME,
+    [
+      '--headless=new',
+      '--disable-gpu',
+      '--hide-scrollbars',
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--log-level=3',
+      `--remote-debugging-port=${PORT}`,
+      `--user-data-dir=${userDataDir}`,
+      'about:blank'
+    ],
+    // 不读管道：Chrome 的日志写满 64KB 缓冲区后会把子进程阻塞住（表现为脚本永久挂起）
+    { stdio: 'ignore' }
+  );
 
   try {
     // 等调试端口就绪

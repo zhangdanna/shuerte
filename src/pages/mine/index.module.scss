@@ -2,10 +2,11 @@
 
 .mine {
   box-sizing: border-box;
-  min-height: 100vh;
+  @include page-viewport;
   background-color: $paper-0;
   @include paper-grain;
-  padding: 72rpx $page-padding 120rpx;
+  padding: 72rpx $page-padding 0;
+  @include page-bottom-space;
 }
 
 /* ============ 页首 ============ */

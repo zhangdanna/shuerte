@@ -181,8 +181,11 @@ let timbre: TimbreKey = 'piano';
  * 声部分池：旋律与伴奏各记各的账。
  * 旧版共用一个 10 声部池，伴奏和弦一进来就把旋律挤掉（voices.shift().stop()），
  * 表现是「和弦响了、旋律断了」。
+ *
+ * 旋律池 16 → 40：结算页的演奏回放是**一次性按绝对时间排完整段**（最多 32 个音，
+ * 只是 start 时刻在未来），池子太小时后建的音会把前面还没响的音直接 stop 掉。
  */
-const MAX_MELODY_VOICES = 16;
+const MAX_MELODY_VOICES = 40;
 const MAX_COMP_VOICES = 24;
 const melodyVoices: Array<() => void> = [];
 const compVoices: Array<() => void> = [];
@@ -282,6 +285,41 @@ export const initAudio = (): void => {
   if (context && context.state === 'suspended') {
     context.resume().catch(() => undefined);
   }
+};
+
+/**
+ * 等到音频上下文真正开始跑。
+ *
+ * `initAudio` 只是"踢一脚"，`resume()` 是异步的：iOS 微信 / 浏览器在页面切换后
+ * 会把 context 挂成 suspended，如果紧接着就开始排音，前面几个音会排在冻结的
+ * currentTime 上而永远不响 —— 这正是「结算页回放没声音」的主因。
+ * 所以排音前必须 await 这里。
+ */
+export const unlockAudio = async (): Promise<boolean> => {
+  const context = ensureSynth();
+  if (!context) {
+    return false;
+  }
+  if (context.state === 'suspended') {
+    try {
+      await context.resume();
+    } catch (error) {
+      console.warn('[Audio] 恢复音频上下文失败', error);
+      return false;
+    }
+  }
+  return true;
+};
+
+/**
+ * 音频时钟（秒，AudioContext 口径）。
+ * 回放要把整段音一次性按绝对时间排进去 —— 逐个 setTimeout 会在主线程卡顿时
+ * 挤成一团甚至丢音（碎片动画最卡的那几百毫秒正好是回放的后半段）。
+ * 拿不到上下文时返回 null，调用方据此退回"敲提示音"的降级路径。
+ */
+export const getAudioTime = (): number | null => {
+  const context = ensureSynth();
+  return context ? context.currentTime : null;
 };
 
 export const setTimbre = (next: TimbreKey): void => {

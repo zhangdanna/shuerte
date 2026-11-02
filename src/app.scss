@@ -9,4 +9,73 @@ page {
   line-height: $line-height-normal;
   color: $color-text-primary;
   background-color: $color-bg-page;
+  // 小程序端没有 H5 那层外壳，让 page 自己铺满一屏，
+  // 页面里的 min-height: 100% 才有依据（H5 里 page 选择器不匹配任何元素，不会生效）
+  height: 100%;
+  min-height: 100vh;
+}
+
+// ============================================
+// H5 应用外壳
+// Taro 生成的结构：
+//   body > #container(.taro-tabbar__container)
+//        > .taro-tabbar__panel > #app(.taro_router) > .taro_page
+// 下面这些选择器只存在于 H5，不影响小程序
+// ============================================
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB',
+    sans-serif;
+  line-height: $line-height-normal;
+  color: $color-text-primary;
+  // 桌面端露出来的「桌面」色，让手机宽度的一列浮在纸上
+  background-color: $paper-desk;
+}
+
+// 外壳高度锁到「真实可视高度」（--app-height，由 index.html 算），不用 100vh：
+// 移动端 100vh 是地址栏收起后的高度，比看得见的区域高一截，底部会被裁掉。
+// 宽度用 --app-width：手机上就是一屏宽，桌面上锁成手机宽度并居中。
+// 注意：这里不能写 px 字面量，本项目的 pxtransform 会把 px 也换算成 rem
+// 只用类选择器：小程序 WXSS 不支持 ID 选择器（#container / #app 会直接编译报错）
+html body > .taro-tabbar__container {
+  width: var(--app-width, 100%);
+  height: var(--app-height, 100vh);
+  margin: 0 auto;
+  overflow: hidden;
+  box-sizing: border-box;
+  background-color: $paper-0;
+  // 全面屏：让开状态栏 / 灵动岛，内容不会被压住
+  padding-top: env(safe-area-inset-top);
+}
+
+// #app 就是路由容器（同一元素的类名是 .taro_router）：高度交给外壳的 flex 布局
+// （panel 已经扣掉 tabBar），所以 100% 就是「tabBar 之上那块可用区域」，
+// 不用再和 100vh 打交道
+html .taro_router {
+  height: 100%;
+  max-height: 100%;
+}
+
+// 默认 overflow-y: scroll 会常驻滚动条，一屏放得下的页面不该出现滚动条
+html .taro_router .taro_page {
+  height: 100%;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+// 滚动交给 .taro_page，外层不要再套一层滚动
+html .taro-tabbar__panel {
+  overflow: hidden;
+}
+
+// tabBar：白底一直铺到屏幕最底边，图标让开 home 指示条
+html .taro-tabbar__tabbar-bottom {
+  margin-bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: content-box;
 }

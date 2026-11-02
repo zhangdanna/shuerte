@@ -2,7 +2,10 @@
 <html>
   <head>
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
-    <meta name="viewport" content="width=375,user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover"
+    />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-touch-fullscreen" content="yes" />
     <meta name="format-detection" content="telephone=no,address=no" />
@@ -10,16 +13,46 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <title>眼力大作战</title>
     <script>
-      // 固定 html fontSize，防止 flexible 脚本动态修改
-      (function() {
-        var html = document.documentElement;
-        html.style.fontSize = '18px';
-        Object.defineProperty(html.style, 'fontSize', {
-          get: function() { return '18px'; },
-          set: function() { /* 忽略所有修改 */ }
+      /**
+       * 布局基准：只做两件事，不要再往里加逻辑。
+       *
+       * 1) 根字号 = 视口宽度 / 20。
+       *    rpx 编译成 rem 时 750rpx = 20rem，所以 750rpx 永远等于一屏宽，
+       *    整站按比例缩放 —— 这才是响应式。
+       *    （旧实现把根字号锁死 18px，等于把设计稿按 360px 定死：宽屏偏小、窄屏溢出。）
+       *
+       * 2) --app-height = 真实可视高度，--app-width = 应用列宽。
+       *    移动端 100vh 是「地址栏收起后」的高度，比实际能看见的区域高一截，
+       *    拿它铺满一屏，底部就会被裁掉 —— 首页/关卡页「偏上、下面空」就是这么来的。
+       *    宽屏（桌面）时应用列宽锁在 MAX_WIDTH，居中显示。
+       */
+      (function () {
+        var doc = document.documentElement;
+        // 桌面端内容列上限：再宽就居中留白，不让一屏被拉散
+        var MAX_WIDTH = 480;
+
+        function layout() {
+          var width = Math.min(doc.clientWidth || window.innerWidth || 375, MAX_WIDTH);
+          doc.style.fontSize = width / 20 + 'px';
+          doc.style.setProperty('--app-width', width + 'px');
+
+          var viewport = window.visualViewport;
+          var height = (viewport && viewport.height) || window.innerHeight || doc.clientHeight;
+          doc.style.setProperty('--app-height', Math.round(height) + 'px');
+        }
+
+        layout();
+        window.addEventListener('resize', layout);
+        // 横竖屏切换时视口尺寸要晚一两帧才稳定，补一次
+        window.addEventListener('orientationchange', function () {
+          layout();
+          setTimeout(layout, 120);
         });
+        // iOS/安卓地址栏收放只触发 visualViewport 的 resize，不会触发 window 的
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', layout);
+        }
       })();
-      <%= htmlWebpackPlugin.options.script %>
     </script>
   </head>
   <body>

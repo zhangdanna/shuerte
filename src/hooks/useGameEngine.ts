@@ -40,6 +40,11 @@ export interface EndPayload {
    * 曲集靠它回放「玩家自己的演奏」；罚时已计入，所以点错后的停顿也会被还原。
    */
   beats: number[];
+  /**
+   * 本局盘面顺序的数字（cells[i].value）。
+   * 结算页的「演奏回放」要按原盘面还原，否则每次重排都和刚才看到的对不上。
+   */
+  values: number[];
 }
 
 export interface GameEngineApi {
@@ -138,7 +143,8 @@ export const useGameEngine = (
         errors: failed.errors,
         done: getDoneCount(failed),
         performance: buildPerformance(),
-        beats: beatsRef.current.slice()
+        beats: beatsRef.current.slice(),
+        values: failed.cells.map((cell) => cell.value)
       });
     }, TIMEOUT_CHECK_INTERVAL);
     return () => clearInterval(timer);
@@ -197,7 +203,8 @@ export const useGameEngine = (
           errors: next.errors,
           done: next.level.total,
           performance: buildPerformance(),
-          beats: beatsRef.current.slice()
+          beats: beatsRef.current.slice(),
+          values: next.cells.map((cell) => cell.value)
         });
       }
     },
