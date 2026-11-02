@@ -8,6 +8,11 @@
   @include page-bottom-space;
   background-color: $paper-0;
   @include paper-grain;
+  display: flex;
+  flex-direction: column;
+  // 关卡不满一屏时（大屏手机、小红书内嵌浏览器）富余高度只分给页头/页脚，
+  // 整块内容居中；溢出时两侧间隔缩到 0，等同于顶部对齐
+  @include page-center-block;
 }
 
 /* ============ 卷首 ============ */

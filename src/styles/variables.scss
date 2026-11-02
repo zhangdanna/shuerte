@@ -116,6 +116,20 @@ $transition-slow: 0.35s ease;
   padding-bottom: calc(#{$space} + env(safe-area-inset-bottom));
 }
 
+// 富余高度只分给「页头」和「页脚」：内容整块在可视区里居中，段间节奏原样不动。
+// 用法：容器必须是 flex column。
+// 为什么不用 justify-content: center —— 内容溢出时 center 会把顶部裁掉；
+// 也不用首尾子元素 margin:auto —— 那会吃掉子元素原有的 margin。
+// 两个 flex:1 的伪元素只在「有富余」时生长，溢出时缩到 0，等同于顶部对齐。
+@mixin page-center-block {
+  &::before,
+  &::after {
+    content: '';
+    flex: 1 1 0;
+    min-height: 0;
+  }
+}
+
 // ============================================
 // 古风语汇：纸纹 / 卷面 / 印章
 // ============================================

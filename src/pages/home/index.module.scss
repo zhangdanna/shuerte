@@ -11,6 +11,10 @@
   @include page-bottom-space;
   display: flex;
   flex-direction: column;
+  // 内容比一屏短时（大屏手机、小红书这类内嵌浏览器），富余高度只分给页头和页脚，
+  // 整块内容在可视区里居中；段与段之间保持原有节奏。
+  // 不能均分到各段之间（整页会散），也不能只让页脚上推（按钮和页脚之间一大片空）
+  @include page-center-block;
 }
 
 /* ============ 首屏：先说清是什么游戏，再立刻能开局 ============ */
@@ -312,8 +316,8 @@
 
 /* ============ 底部数据 ============ */
 .footer {
-  // 内容撑不满一屏时，页脚落到屏幕底部，不留一段空纸
-  margin-top: auto;
+  // 富余高度由 page-center-block 分给页头/页脚，这里保持常规间距
+  margin-top: $spacing-lg;
   padding-top: $spacing-lg;
   border-top: 2rpx solid $line;
   display: flex;
