@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Text, View } from '@tarojs/components';
-import Taro, { useDidHide, useDidShow, useRouter } from '@tarojs/taro';
+import Taro, { useDidHide, useDidShow, useRouter, useShareAppMessage, useShareTimeline } from '@tarojs/taro';
 import classnames from 'classnames';
 import GameGrid from '@/components/GameGrid';
 import TimerRing from '@/components/TimerRing';
@@ -12,6 +12,7 @@ import { useRunStore } from '@/store/useRunStore';
 import { calcStars, ERROR_PENALTY } from '@/utils/scoring';
 import { getCurrentTarget, getDoneCount } from '@/utils/gameEngine';
 import { formatSeconds } from '@/utils/format';
+import { getGameShare, getGameTimeline } from '@/utils/share';
 import { initAudio, playSound, resumeAudio, suspendAudio } from '@/services/audio';
 import { GameResult, LevelConfig } from '@/types/game';
 import styles from './index.module.scss';
@@ -268,6 +269,10 @@ const GameContent: React.FC<{ level: LevelConfig }> = ({ level }) => {
 const GamePage: React.FC = () => {
   const router = useRouter();
   const level = getLevelById(router.params.levelId ?? '');
+
+  // hook 必须无条件调用，所以放在关卡校验的提前 return 之前；level 缺失时分享内容退回通用文案
+  useShareAppMessage(() => getGameShare(level?.id ?? ''));
+  useShareTimeline(() => getGameTimeline(level?.id ?? ''));
 
   // 页面参数属于外部输入边界：非法或缺失直接暴露，不用默认关卡兜底
   if (!level) {

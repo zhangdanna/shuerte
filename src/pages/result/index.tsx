@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Text, View } from '@tarojs/components';
-import Taro, { useRouter, useUnload } from '@tarojs/taro';
+import Taro, { useRouter, useShareAppMessage, useShareTimeline, useUnload } from '@tarojs/taro';
 import classnames from 'classnames';
 import RunReplay from '@/components/RunReplay';
 import StarRating from '@/components/StarRating';
@@ -21,6 +21,7 @@ import { getNoteForValue } from '@/utils/music';
 import { isLevelUnlocked } from '@/utils/progress';
 import { ReplayCue } from '@/utils/replay';
 import { ERROR_PENALTY, GRADE_LABELS } from '@/utils/scoring';
+import { getResultShare, getResultTimeline } from '@/utils/share';
 import { formatSeconds } from '@/utils/format';
 import { PerformanceGrade } from '@/types/game';
 import styles from './index.module.scss';
@@ -59,6 +60,11 @@ const ResultPage: React.FC = () => {
   useUnload(() => {
     releaseSounds();
   });
+
+  // 分享要在下面「参数非法」的提前 return 之前无条件调用；level 缺失时文案自动退回通用版
+  const shareInput = { levelId: level?.id ?? '', stars, elapsed, errors, done, grade, failed };
+  useShareAppMessage(() => getResultShare(shareInput));
+  useShareTimeline(() => getResultTimeline(shareInput));
 
   // 参数来自上一页跳转，属于外部输入边界：非法值明确暴露而不是用假数据渲染
   if (!level || !Number.isFinite(elapsed) || !Number.isFinite(stars)) {

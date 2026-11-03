@@ -1,5 +1,7 @@
 export default definePageConfig({
   navigationBarTitleText: '专注挑战',
   disableScroll: true,
-  backgroundColor: '#FFF0EB'
+  backgroundColor: '#FFF0EB',
+  enableShareAppMessage: true,
+  enableShareTimeline: true
 });

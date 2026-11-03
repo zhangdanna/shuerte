@@ -258,7 +258,7 @@ shuerte/
     │   └── rank/              # 排行榜（占位）
     ├── components/            # GameGrid / GridCell / TimerRing / StarRating / LevelCard / Disc / RunReplay
     ├── hooks/useGameEngine.ts # 引擎状态机 + 副作用编排
-    ├── utils/                 # gameEngine / circleLayout / silhouette / scoring / progress / shuffle / music / beats / replay / format / classics（纯函数）
+    ├── utils/                 # gameEngine / circleLayout / silhouette / scoring / progress / shuffle / music / beats / replay / share / format / classics（纯函数）
     ├── services/              # audio / accompaniment / haptics / storage（平台能力封装）
     ├── store/                 # useSaveStore（存档 + 设置）、useRunStore（对局 → 结算的一次性交接）
     ├── data/                  # levels.ts（关卡蓝图与阈值表）、patternShapes.json（12 个图案的归一化多边形）、songs.ts、classics.ts、sounds.ts（生成文件）
@@ -292,6 +292,7 @@ shuerte/
 - **回放的时间尺度**：保留相邻击键的**相对比例**、整体压到 1.1~3.2 秒，相邻两格至少 **50ms**——这个下限同时是「人能分辨相邻两音」的门槛（再小 8×8 的 64 个音会糊成一堵墙）；超过 **32 格隔一格响一个**，8×8 由 64 音降到 32 音
 - **回放为什么不用逐格 `setTimeout`**：结算页的音没有用户手势托底，iOS 微信 / 浏览器会把 `AudioContext` 挂成 suspended，`resume()` 是异步的，等它 resolve 时前几个音已经排空；而碎片动画最卡的那几百毫秒又正好压在回放后半段。改为 `unlockAudio()`（显式 resume 并 await）→ `getAudioTime()` → `playNote(midi, vel, when)` **一次性按绝对时间**排进音频图，时序交给音频硬件，主线程怎么卡都不影响
 - **回放数据只走内存**：`store/useRunStore` 刻意不持久化——它只服务刚打完这一局，8×8 的 64 个时间戳塞不进微信页面 path
+- **分享（转发 / 朋友圈）**：微信的「转发给朋友 / 分享到朋友圈」**不是默认开启的**——页面没定义 `onShareAppMessage` 就是灰的「当前页面未设置分享」（与是否上线无关）。文案全部由 `utils/share.ts` 的纯函数产出，页面只用 `useShareAppMessage` / `useShareTimeline` 接上；两套返回结构不能混：转发可以带 `path`，朋友圈**只能 `title/query/imageUrl`**（单页模式只能进当前页，参数靠 `query`）。Taro 4 会扫页面源码里的这两个标识符自动往页面 config 注入 `enableShareAppMessage` / `enableShareTimeline`，各页 `index.config.ts` 里也显式写了同一开关做双保险
 
 **存档字段**（Storage key：`shuerte_save`，`SAVE_VERSION = 5`）：
 
@@ -342,6 +343,8 @@ settings     { sound, music, accompaniment, haptics, colorful, timbre }
 | 调整星级阈值 | `src/data/levels.ts` 的 `SIZE_THRESHOLDS`；收紧系数在 `cycleFactor`，极速档在 `PLATINUM_RATIO` |
 | 换配色 / 加背景图案 | `src/styles/theme.scss` |
 | 调整提示音 | `scripts/gen-sounds.js` 参数后重新运行（勿手改 `data/sounds.ts`） |
+| 改分享文案 / 分享落地页 | `src/utils/share.ts`（每个页面一个 `get*Share` / `get*Timeline`）。**朋友圈只能返回 `title/query/imageUrl`，写 `path` 会被忽略**；新增页面要转发就必须在页面里调 `useShareAppMessage`（朋友圈再加 `useShareTimeline`），否则右上角菜单是灰的 |
+| 给分享配图 | 在各 `get*Share` 里加 `imageUrl`（包内路径或 https，PNG/JPG，朋友 5:4、朋友圈 1:1）。不填则微信自动截当前页 |
 | 调整曲目 | `scripts/gen-songs.js` 的 `SPECS` / `HOOKS` 后重新运行（勿手改 `data/songs.ts`） |
 | 换 tabBar 图标 | 改 `scripts/gen-tabbar-icons.js` 后重新运行（微信只支持 PNG，不要提交 SVG） |
 | 加设置项 | `types/game.ts` → `store` 的 `initialData` → `pages/mine` UI → `app.tsx` 同步 |

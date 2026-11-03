@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Text, View } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro';
 import classnames from 'classnames';
 import LevelCard from '@/components/LevelCard';
 import { CHAPTERS, GUIDE_LEVEL, MAX_STARS, getChapterById, getChapterLevels } from '@/data/levels';
@@ -8,6 +8,7 @@ import { getSongOrDefault } from '@/data/songs';
 import { useSaveStore } from '@/store/useSaveStore';
 import { findCurrentLevel, isChapterUnlocked, isLevelUnlocked } from '@/utils/progress';
 import { ERROR_PENALTY } from '@/utils/scoring';
+import { getLevelsShare, getLevelsTimeline } from '@/utils/share';
 import { formatSeconds } from '@/utils/format';
 import { LevelConfig } from '@/types/game';
 import styles from './index.module.scss';
@@ -19,6 +20,9 @@ const LevelsPage: React.FC = () => {
   const stars = useSaveStore((state) => state.stars);
   const bestTimes = useSaveStore((state) => state.bestTimes);
   const tutorialDone = useSaveStore((state) => state.tutorialDone);
+
+  useShareAppMessage(() => getLevelsShare());
+  useShareTimeline(() => getLevelsTimeline());
 
   const totalStars = Object.values(stars).reduce((sum, value) => sum + value, 0);
   const currentLevel = findCurrentLevel(stars, totalStars, tutorialDone);

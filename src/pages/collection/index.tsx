@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Text, View } from '@tarojs/components';
-import Taro, { useDidHide, useUnload } from '@tarojs/taro';
+import Taro, { useDidHide, useShareAppMessage, useShareTimeline, useUnload } from '@tarojs/taro';
 import classnames from 'classnames';
 import Disc from '@/components/Disc';
 import { LEVELS } from '@/data/levels';
@@ -12,6 +12,7 @@ import { SongBeats, pickSongBeats } from '@/utils/beats';
 import { getClassicProgress } from '@/utils/classics';
 import { playSong, stopAllNotes } from '@/services/audio';
 import { GRADE_LABELS } from '@/utils/scoring';
+import { getCollectionShare, getCollectionTimeline } from '@/utils/share';
 import { ClassicSong, PerformanceGrade, SongConfig, TimbreKey } from '@/types/game';
 import styles from './index.module.scss';
 
@@ -53,6 +54,9 @@ const CollectionPage: React.FC = () => {
   const bestRuns = useSaveStore((state) => state.bestRuns);
   const settings = useSaveStore((state) => state.settings);
   const setSetting = useSaveStore((state) => state.setSetting);
+
+  useShareAppMessage(() => getCollectionShare());
+  useShareTimeline(() => getCollectionTimeline());
 
   const totalStars = Object.values(starsMap).reduce((sum, value) => sum + value, 0);
 

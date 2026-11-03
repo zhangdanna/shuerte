@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
-import Taro from '@tarojs/taro';
+import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro';
 import { View, Text, Switch } from '@tarojs/components';
 import classnames from 'classnames';
 import { useSaveStore } from '@/store/useSaveStore';
 import { LEVELS, MAX_STARS } from '@/data/levels';
 import { countGoldRecords } from '@/utils/classics';
+import { getMineShare, getMineTimeline } from '@/utils/share';
 import { TimbreKey } from '@/types/game';
 import styles from './index.module.scss';
 
@@ -22,6 +23,9 @@ export default function MinePage() {
   const totalStars = Object.values(stars).reduce((sum, s) => sum + s, 0);
   const clearedLevels = Object.values(stars).filter((s) => s > 0).length;
   const goldRecords = countGoldRecords(stars);
+
+  useShareAppMessage(() => getMineShare({ totalStars, cleared: clearedLevels }));
+  useShareTimeline(() => getMineTimeline({ totalStars, cleared: clearedLevels }));
 
   const handleReset = useCallback(() => {
     Taro.showModal({

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import Taro from '@tarojs/taro';
+import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro';
 import { View, Text } from '@tarojs/components';
 import classnames from 'classnames';
 import Disc from '@/components/Disc';
@@ -7,6 +7,7 @@ import { useSaveStore } from '@/store/useSaveStore';
 import { CHAPTERS, LEVELS, MAX_STARS, getChapterLevels } from '@/data/levels';
 import { getSongOrDefault } from '@/data/songs';
 import { findCurrentLevel, isChapterUnlocked } from '@/utils/progress';
+import { getHomeShare, getHomeTimeline } from '@/utils/share';
 import { formatSeconds } from '@/utils/format';
 import styles from './index.module.scss';
 
@@ -20,6 +21,10 @@ const DEMO_STEP = 0.45;
 
 export default function HomePage() {
   const { stars, bestTimes, streakDays, tutorialDone } = useSaveStore();
+
+  // 右上角菜单的「转发给朋友 / 分享到朋友圈」靠这两个 hook 点亮，不接就是灰的「当前页面未设置分享」
+  useShareAppMessage(() => getHomeShare());
+  useShareTimeline(() => getHomeTimeline());
 
   // 小程序端导航栏标题已置空（首页自绘大标题）；H5 端的「标题」是浏览器标签，给个正式名字
   useEffect(() => {

@@ -50,7 +50,7 @@
 | 技术栈 | Taro 4.1.9 + React 18 + TypeScript 5 + Sass（CSS Modules）+ zustand + dayjs + classnames |
 | 设计稿基准 | 750rpx（`config/index.ts` 的 `designWidth: 375`，**代码里统一写 rpx**） |
 | 数据 | 纯本地，无后端、无登录、不涉及云开发 |
-| 进度 | v2 完成：36 关（小令/中调/长调 三卷 × 12 关 = 前 6 关正序 + 后 6 关变体（小令/中调倒序、长调双色），尺寸 3×3→8×8，卡片造型 方形/圆形/图案，每关限时、计时、音效、存档、星级结算（满星 3/4/5））+ 第一关前的「引子」指引关 + 顺序解锁；音频系统完成（6 首算法原创 + 4 声部伴奏引擎 + 6 首公有领域名曲按战绩解锁）；结算页「演奏回放」完成（按本局点击顺序重放 + 碎裂，声音按绝对时间连奏）；M2/M3 见 §3 |
+| 进度 | v2 完成：36 关（小令/中调/长调 三卷 × 12 关 = 前 6 关正序 + 后 6 关变体（小令/中调倒序、长调双色），尺寸 3×3→8×8，卡片造型 方形/圆形/图案，每关限时、计时、音效、存档、星级结算（满星 3/4/5））+ 第一关前的「引子」指引关 + 顺序解锁；音频系统完成（6 首算法原创 + 4 声部伴奏引擎 + 6 首公有领域名曲按战绩解锁）；结算页「演奏回放」完成（按本局点击顺序重放 + 碎裂，声音按绝对时间连奏）；分享完成（7 个页面全部接上转发与朋友圈，结算页分享带完整成绩）；M2/M3 见 §3 |
 
 ---
 
@@ -127,6 +127,7 @@
 | 曲集页 | `pages/collection/index` | ✅ 完成 | 6 张唱片按顺序开卷（未至 / 未收录 / 已收录 / 金唱片四态）、汉字序号朱印、**回放的是玩家最好那一次的击键节奏**（`utils/beats.ts` 取该曲记录最长的一关）、回放中该条唱片转 3.6s 一圈；标题行右侧有「伴奏 开/关」即时开关；下方「名曲拾遗」区块按战绩解锁；音色文案由 `song.style` 派生（不再写死在档位上） |
 | 我的页 | `pages/mine/index` | ✅ 完成 | 演奏者统计卡（星/通关/场次/连续/金唱片）+ 声音（演奏音/伴奏/提示音/震动/音色）、画面两组设置 + 清空；「音符碎片」随安可曲占位一并移除 |
 | 全局配置 | `app.config.ts` / `styles/theme.scss` / 6 个 tabBar 图标 | ✅ 完成 | 青绿主题 |
+| 分享（转发 / 朋友圈） | `utils/share.ts` + 各 `pages/*/index.tsx` 的 `useShareAppMessage` / `useShareTimeline` + 各 `pages/*/index.config.ts` 的 `enableShareAppMessage` / `enableShareTimeline` | ✅ 完成 | **微信右上角菜单的这两项不是默认开启的**：页面没定义 `onShareAppMessage` 就是灰的「当前页面未设置分享」。文案全部由 `utils/share.ts` 纯函数产出（`ShareMessage` 带 `path` 给朋友、`ShareTimeline` 只能 `title/query/imageUrl` 给朋友圈）；结算页分享带完整成绩参数（朋友圈落结算页要看得到成绩卡，不能只剩「成绩读取失败」），但 `path` 指向对局页（朋友点开直接开局）；排行榜占位页只开转发不开朋友圈 |
 
 ### 3.2 未开始 / 待办（按建议优先级）
 
@@ -139,7 +140,7 @@
 | 新玩法：静默变位 | M2 | `types/game.ts` 加 mode，`data/levels.ts` 配置，引擎推进策略 | 倒序 / 双色交替已在档内后 6 关落地，只剩静默变位 |
 | 双路线反馈（速度评级 / 精准评级） | M2 | `pages/result` | 给玩家第二个进步维度 |
 | 排行榜（云端） | M3 | 新建 `services/rank.ts`（接口占位）+ `pages/rank` | 需服务端校验成绩时间戳防作弊 |
-| 分享海报 | M3 | `pages/result` | |
+| 分享海报 | M3 | `pages/result` | 分享卡片已通（`utils/share.ts`），海报是「画一张带成绩的图」的另一件事 |
 | 第四卷「挑战」（混合玩法） | M3 | `data/levels.ts` 新增轮次 + `types/game.ts` 加 `mode` | 已在无限轮次里预留位置，依赖新模式先落地 |
 
 ### 3.3 验证状态
@@ -163,6 +164,7 @@
 | 预览服务掉线恢复 + 「我的」页列表 key 修复 | ✅ 浏览器实测通过（重启后首页→关卡→点第 1 关正常进入对局页，无「应用程序异常」/`ChunkLoadError`，可通关并写档；「我的」页今日/最近成绩列表正常渲染，控制台不再出现 `unique "key" prop` 警告，无新增报错） |
 | 图案卡替换生肖 + ♪ 改按需 + 数字提浅 + 彩色配色 + 限时收紧 | ✅ `tsc --noEmit` 通过；`preview-shapes.js` 12 图案 × 3~8 尺寸 72 组合全部划分成功（连通块=1、最小格 17~36rpx、面积 18%~42%）；`preview-cards.js` 截图逐张核对：圆盘 3/5/8 缝隙清晰有圆角、12 图案 5×5 轮廓可辨（花瓣/星角/齿轮齿清楚）、六角星与五瓣花 8×8 分格铺满、五瓣花「已点示例」里 ♪ 只落在已点格且跟在数字后、方形卡「已点示例」♪ 只出现在 1~7 号格右下角；图案卡底色实测 `#e3d5bd` 与棋盘同族、数字 `#5b544b` 明显比原 `#2f2a24` 浅 |
 | 音频系统（修音 + 伴奏 + 名曲） | ✅ `tsc --noEmit` + `build:h5` 通过；`analyze-songs.js` 原创 6 首「强拍冲突 0 / 弱拍经过 0 / 大跳 0」、名曲 6 首「强拍冲突 0」（6 处弱拍经过音是刻意保留的）；`audio-similarity.js` 12 首全部 PASS（无 ≥8 音程重合）；`buildBarPlan` 逐小节核对配器 —— 0–3 只有 bass+pad、4–7 加 arp、8–14 加 perc、15 只留 pad；CDP 实测曲集（30 星存档）：欢乐颂/卡农已解锁、小步舞曲 62.5%、致爱丽丝 41.6%、绿袖子 31.2%、茉莉花 37.5% 四条解锁进度条宽度与门槛一致，点击欢乐颂后 2.6s→4.6s 进度条 14px→25px（≈4.5→8 个音，与 100bpm 相符）、唱片转 3.6s、文案变「停止」；双色关 3-7 与我的页（30/144 星、金唱片 1、伴奏开关）无回归 |
+| 分享（转发 / 朋友圈） | ✅ 代码侧通过：`tsc --noEmit` 全量 0 error；7 个页面 + `utils/share.ts` 都在编译范围内；hook 全部位于组件顶层且在「参数非法」提前 return 之前（`pages/game`、`pages/result` 两处特意核过顺序）；`utils/share.ts` 对空 `levelId`、`NaN` 结算参数做了兜底（`safeInt`、缺关卡时退回通用文案且不把空 `levelId` 拼进 query）。⬜ **真机未验证**：菜单项是否点亮、朋友圈在 iOS 上仍不可用（平台限制）—— 需 Android 真机扫码复验 |
 
 ---
 
@@ -328,6 +330,7 @@ settings{ sound, music, accompaniment, haptics, colorful, timbre }
 | --- | --- | --- |
 | 小程序端音效需落地临时文件 | `InnerAudioContext` 不支持 data URI，`services/audio.ts` 会把 base64 写入 `USER_DATA_PATH` 再播放 | 已实现，勿改成直接塞 data URI |
 | 排行榜为占位页 | M1 无后端，成绩仅存本机 | M3 实现 |
+| 「分享到朋友圈」仅 Android 可用 | 微信官方限制：小程序朋友圈分享只在 Android 微信客户端可用，iOS 上该菜单项仍是灰的；且需要基础库 2.11.3+。**这不是代码 bug，别去改** | 代码已按平台能力写全（`onShareTimeline` 已定义），iOS 端灰着属预期；朋友圈进入是「单页模式」，页面里的 `navigateTo` / `redirectTo` 可能受限，所以朋友圈分享的 `query` 必须自带全部展示所需参数 |
 | 真机未验证 | 只做了浏览器端到端验证（自动化点击是通过派发 click 事件完成的） | 下次改动建议扫码真机复验手感/震动/音效 |
 | 未接入版本控制 | 项目目录无 `.git` | 建议 `git init` 后再做大改动 |
 | 模板遗留文件 | `services/cloud.ts` 为模板预置，M1 未使用（无后端） | 接云端时再启用 |
@@ -390,6 +393,7 @@ settings{ sound, music, accompaniment, haptics, colorful, timbre }
 
 | 日期 | 变更 | 验证 |
 | --- | --- | --- |
+| 2026-11-03 | **打通分享（转发给朋友 / 分享到朋友圈）**（用户反馈「小程序上线后不能转发给朋友和分享到朋友圈」，截图里两项都是灰的「当前页面未设置分享」）：① **根因** —— 微信的这两项菜单不是默认开启的，页面必须定义 `onShareAppMessage` / `onShareTimeline` 才可点；全项目 grep 确认 7 个页面一处都没写，所以全灰，与是否上线、是否审核无关；② **文案层** —— 新建 `utils/share.ts`（纯函数，不碰平台 API），按页面分两套返回结构：`ShareMessage{title,path}` 给朋友、`ShareTimeline{title,query}` 给朋友圈（朋友圈只能 title/query/imageUrl，**不能带 path**，单页模式只能进当前页）；标题统一按 30 字收口（`clip`），结算参数走 `safeInt` 防 `NaN`；③ **接入** —— 7 个页面用 `useShareAppMessage` / `useShareTimeline`（`pages/game`、`pages/result` 必须放在「参数非法」的提前 return **之前**，否则 hook 数量随渲染变化）；Taro 4 会扫页面源码里的这两个标识符自动往页面 config 注入开关，同时在 `index.config.ts` 里显式写 `enableShareAppMessage` / `enableShareTimeline` 双保险；④ **文案分工** —— 首页讲「这是什么」、关卡「你走到第几卷」、曲集「点格子就是旋律」、我的「我攒了多少星」、对局页「来挑战这一关」；结算页是主战场：转发带完整成绩（`N★ · 评级 · 用时`），但 `path` 指向对局页（朋友看到成绩第一反应是自己玩）；朋友圈落结算页，所以 `query` 把 `levelId/elapsed/errors/stars/done/grade/isBest/failed` 全带上，否则朋友点开只会看到「成绩读取失败」；排行榜占位页只开转发不开朋友圈 | `tsc --noEmit` 全量 0 error；15 个改动文件逐一 `transpileModule` 语法校验通过；hook 顺序与 `utils/share.ts` 的兜底分支逐条读代码核对；**真机未验证**（菜单项是否点亮需 Android 真机扫码；朋友圈在 iOS 上仍不可用属平台限制） |
 | 2026-11-02 | **文档全量对齐代码**（用户要求「更新所有 md 文档」）：① **`game.md` 归位** —— 文件原先在项目根目录，但 `README.md` / 本文 §10 / `docs/game-design.md` 三处链接都指向 `docs/game.md`，它自己末尾写的也是 `../README.md` 与 `./audio-license.md`，四处链接全断；移入 `docs/` 后全部成立；② **修本文 §4 三处与代码不符** —— `SAVE_VERSION` 4 → **5**（v5 是加 `settings.accompaniment` 那次）、旋律声部上限 16 → **40**（结算页一次性排 32 音，池子小会把没响的音 stop 掉）、`TICK_INTERVAL` 的位置 `components/TimerBar` → **`TimerRing`**（组件早已改名，`TimerBar` 目录不存在）；③ **§4 新增两行常量**：「回放节奏」（`MIN_STEP` 50ms / `SPARSE_OVER` 32 / `MAX_TOTAL` 3200）与「回放排音方式」（绝对时间一次性排程，别再改回逐格 setTimeout）；④ **`README.md`** 补上 11-02 新增的 `components/RunReplay` / `utils/replay.ts` / `store/useRunStore` 三个模块、新增「结算页演奏回放」机制段、`TimerBar` → `TimerRing`、首页描述由「五线谱浮音」改为「3×3 演示盘 + 玩法优先」、脚本清单补 `shot-replay.js` 与 `seed-save.js`、存档字段补 `version: 5`；⑤ **`docs/game.md`** 功能状态补「结算页演奏回放」、评级公式按代码写成 `(Perfect + Good×0.5) / 总音数`（原文档写成「Perfect 占比」，与实现不符）、引子补「60s 兜底但不判失败」、FAQ 补「结算页回放与曲集回放的区别」；⑥ **历史设计文档加「落地后修订」**（`design-v2.md` / `audio-system-design.md` / `tech-plan.md` / `game-design.md` / `audio-license.md`）—— 不改写当时的结论，只在末尾标注实际实现值与被废弃项（声部池 12/16→40/24、lookahead 25ms/0.2s→30ms/0.25s、安可曲与音符碎片占位已整体移除） | 全量核对：`SAVE_VERSION=5`、`MAX_MELODY_VOICES=40`、`MIN_STEP=50`、`SPARSE_OVER=32` 逐项读源码确认；`ls docs/*.md` 确认 `docs/game.md` 就位、根目录只剩 `AGENTS.md` / `README.md`；5 份文档内部的相对链接（`../README.md`、`./game.md`、`./audio-license.md`）逐条落到实际文件；本次仅改文档，未动代码，无需重跑构建 |
 | 2026-11-02 | **回放改成「绝对时间连奏」+ 首页按钮下移**（用户反馈「还是没声音；点击顺序只是个动画，声音连起来播放即可；大棋盘每 2 格响一个」）：① **根因** —— 上一版是「每格一个 `setTimeout` → `playNote()`」，但结算页的音没有用户手势托底，iOS 微信 / 浏览器把 `AudioContext` 挂成 suspended，`resume()` 是异步的，等它 resolve 时前几个音已经排空；且碎片动画最卡的那几百毫秒正好落在回放后半段，定时器挤成一团甚至丢音；② **改法** —— 新增 `unlockAudio()`（显式 resume 并 **await**）与 `getAudioTime()`（拿 `currentTime`），结算页拿到整条 `cues` 后**一次性按绝对时间** `playNote(midi, vel, when)` 排进音频图，时序交给音频硬件，主线程怎么卡都不影响；resume 耗掉的 lag 会补回来；③ **抽稀** —— `buildReplayPlan` 增加 `cues`（>32 格隔一格取一个），8×8 由 64 音降到 32 音、间隔 ~100ms；④ **声部池** 旋律 16→40：一次性排 32 个音时，池子太小时后建的音会把还没响的音 stop 掉；⑤ `RunReplay` 的 `onCue` 换成 `onPlan(cues)`（组件只交节奏表，不碰音频服务）；⑥ **首页**「继续挑战」从演示盘下移到配乐条下面（`startSection` 独立成块） | `tsc --noEmit` + `build:h5` 通过；探针实测 3×3 = 9 音 / 间隔 138ms / 跨度 1100ms，8×8 = 32 音 / 间隔 100ms / 跨度 3100ms（抽稀生效）；首页 375×812 截图确认按钮在曲子条之下、tabBar 无遮挡 |
 | 2026-11-02 | **结算页回放出声**（用户反馈「展示了演奏顺序但没有声音」）：根因是回放从头到尾只有 CSS 动画、没有任何音频调度（不是被静音）。① `utils/replay.ts` 把 `MIN_STEP` 16→**50ms**、`MAX_TOTAL` 2200→**3200ms** —— 这个下限同时是「人能分辨相邻两音」的门槛，原来的 16ms 会让 8×8 的 64 个音糊成一堵墙；② `RunReplay` 新增 `onCue(value)` prop（组件仍不碰 service 层）：视觉继续走 `animation-delay`，声音用同一份 `delay` 起定时器逐个回调，`LEAD_MS = 560ms` 让通关音先响完，声画共用同一起点；③ 结算页补 `initAudio()`（从分享/历史直进时 AudioContext 可能是 suspended），`onCue` 用 `getNoteForValue` 取音高（与对局完全同一条规则，听到的就是刚才那一遍），力度按音数衰减（64 音时 0.45）避免叠爆；开关不用另判 —— `playNote` 内部 `musicEnabled` 守卫会自动尊重「演奏音」关闭；④ `shot-replay.js` 加音频探针：拦 `AudioContext.prototype.createOscillator` 记录音数与间隔，并在跑完后主动 `process.exit` 避免挂住 | `tsc --noEmit` + `build:h5` 通过；探针实测 3×3 = 27 振荡器（9 音 × 3 分音）间隔 ~137ms、8×8 = 192（64 音 × 3）间隔 ~47ms，音高 262~1978Hz；碎裂取帧视觉无回归 |
