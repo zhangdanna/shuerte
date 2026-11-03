@@ -3,8 +3,8 @@ const ci = require('miniprogram-ci');
 const path = require('path');
 
 // 每次上传前修改这两项
-const VERSION = '2.1.0'; // 版本号，需在版本管理中与历史版本区分
-const DESC = '结算页全新上线'; // 本次更新说明
+const VERSION = '2.2.0'; // 版本号，需在版本管理中与历史版本区分
+const DESC = '微信分享功能上线'; // 本次更新说明
 
 (async () => {
   const project = new ci.Project({
