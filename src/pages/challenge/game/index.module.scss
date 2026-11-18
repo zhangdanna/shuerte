@@ -1,0 +1,399 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  position: relative;
+  box-sizing: border-box;
+  @include page-viewport;
+  padding: $spacing-sm $page-padding 0;
+  @include page-bottom-space;
+  background-color: $memory-paper;
+  @include paper-grain(rgba(206, 199, 184, 0.5));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// 顶部一团淡墨：把视线压在盘面上，而不是让整页均匀发亮
+.wash {
+  position: absolute;
+  top: -260rpx;
+  left: 50%;
+  width: 720rpx;
+  height: 720rpx;
+  margin-left: -360rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(43, 42, 38, 0.07) 0%, rgba(43, 42, 38, 0) 70%);
+  pointer-events: none;
+}
+
+/* ============ 顶栏 ============ */
+.topbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 88rpx;
+}
+
+.backBtn {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backIcon {
+  font-size: 48rpx;
+  line-height: 1;
+  color: $memory-wash;
+}
+
+.titleBox {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.levelTitle {
+  font-family: $font-serif;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.12em;
+  color: $memory-ink;
+}
+
+.levelSub {
+  margin-top: 2rpx;
+  font-size: 20rpx;
+  letter-spacing: 0.08em;
+  color: $memory-wash;
+}
+
+.iconBtn {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid $memory-ink-line;
+  border-radius: $radius-round;
+  background-color: transparent;
+}
+
+.iconBtnOff {
+  opacity: 0.35;
+}
+
+.iconText {
+  font-size: 28rpx;
+  line-height: 1;
+  color: $memory-ink;
+}
+
+/* ============ HUD ============ */
+.hud {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: $spacing-sm 0 $spacing-xs;
+}
+
+.targetBox {
+  display: flex;
+  flex-direction: column;
+}
+
+.targetLabel {
+  font-size: $font-size-xs;
+  letter-spacing: 0.2em;
+  color: $memory-wash;
+}
+
+// 当前目标：整页最大的字，用衬线 + 浓墨，像纸上写下的一个数
+.targetValue {
+  margin-top: -4rpx;
+  font-family: $font-serif;
+  font-size: 132rpx;
+  font-weight: $font-weight-bold;
+  line-height: 1.05;
+  color: $memory-ink;
+  font-variant-numeric: tabular-nums;
+}
+
+.hudRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-bottom: $spacing-sm;
+}
+
+.hudTime {
+  font-family: $font-serif;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $memory-ink;
+  font-variant-numeric: tabular-nums;
+}
+
+.hudProgress {
+  margin-top: 2rpx;
+  font-size: $font-size-xs;
+  color: $memory-wash;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============ 命 ============ */
+// 命点用朱砂：整局唯一的暖色，失去后变成空心圈 —— 一眼数得清还剩几条
+.lives {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.life {
+  width: 14rpx;
+  height: 14rpx;
+  margin-right: 10rpx;
+  border-radius: $radius-round;
+  background-color: $memory-cinnabar;
+  transition: background-color $transition-base, border-color $transition-base;
+}
+
+.lifeLost {
+  background-color: transparent;
+  border: 2rpx solid rgba(168, 58, 44, 0.35);
+}
+
+.livesText {
+  margin-left: $spacing-xs;
+  font-size: $font-size-xs;
+  letter-spacing: 0.04em;
+  color: $memory-wash;
+}
+
+/* ============ 记忆条 ============ */
+.barArea {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.barHint {
+  margin-top: $spacing-xs;
+  font-size: $font-size-xs;
+  color: $memory-wash;
+  text-align: center;
+}
+
+/* ============ 盘面 ============ */
+.gridArea {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-md 0;
+}
+
+// 盘面外面裱一层宣纸：一道淡墨线 + 内衬白边，像一幅小画被装进册页
+.sheet {
+  box-sizing: border-box;
+  width: 686rpx;
+  padding: 14rpx;
+  background-color: $memory-paper-raised;
+  border: 2rpx solid $memory-ink-line;
+  border-radius: $radius-sm;
+  box-shadow: inset 0 0 0 6rpx rgba(243, 240, 232, 0.9);
+}
+
+/* ============ 底部 ============ */
+.bottom {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: $spacing-sm;
+}
+
+.peekBtn {
+  width: 100%;
+  height: $button-height-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: 2rpx solid $memory-ink;
+  border-radius: $radius-sm;
+  transition: transform $transition-fast, background-color $transition-fast;
+
+  &:active {
+    transform: scale(0.985);
+    background-color: rgba(43, 42, 38, 0.05);
+  }
+}
+
+.peekBtnDisabled {
+  opacity: 0.28;
+}
+
+.peekText {
+  font-family: $font-serif;
+  font-size: $font-size-md;
+  letter-spacing: 0.14em;
+  color: $memory-ink;
+}
+
+.peekHint {
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: rgba(111, 107, 99, 0.6);
+}
+
+/* ============ 覆盖层 ============ */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 $spacing-xl;
+  background-color: rgba(243, 240, 232, 0.96);
+}
+
+.overlayTitle {
+  font-family: $font-serif;
+  font-size: $font-size-lg;
+  letter-spacing: 0.2em;
+  color: $memory-wash;
+}
+
+.countdown {
+  margin: $spacing-sm 0;
+  font-family: $font-serif;
+  font-size: 168rpx;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+  color: $memory-ink;
+  animation: countPop 0.5s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+.overlayTip {
+  font-family: $font-serif;
+  font-size: $font-size-md;
+  letter-spacing: 0.08em;
+  color: $memory-ink;
+}
+
+.overlaySub {
+  margin-top: $spacing-xs;
+  font-size: $font-size-xs;
+  color: $memory-wash;
+}
+
+.pauseCard {
+  width: 100%;
+  max-width: 560rpx;
+  padding: $spacing-xl $spacing-lg $spacing-lg;
+  background-color: $memory-paper-raised;
+  border: 2rpx solid $memory-ink-line;
+  border-radius: $radius-sm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pauseTitle {
+  font-family: $font-serif;
+  font-size: 44rpx;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.16em;
+  color: $memory-ink;
+}
+
+.pauseDesc {
+  margin: $spacing-sm 0 $spacing-lg;
+  font-size: $font-size-sm;
+  line-height: $line-height-normal;
+  color: $memory-wash;
+  text-align: center;
+}
+
+.primaryBtn {
+  width: 100%;
+  height: $button-height-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $memory-ink;
+  border-radius: $radius-sm;
+}
+
+.primaryBtnText {
+  font-family: $font-serif;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.2em;
+  color: $memory-paper-raised;
+}
+
+.ghostBtn {
+  margin-top: $spacing-sm;
+  padding: $spacing-xs 0;
+}
+
+.ghostBtnText {
+  font-size: $font-size-sm;
+  color: $memory-wash;
+}
+
+/* ============ 空态 ============ */
+.emptyPage {
+  box-sizing: border-box;
+  @include page-viewport;
+  padding: $spacing-xl $page-padding;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: $memory-paper;
+}
+
+.emptyTitle {
+  font-family: $font-serif;
+  font-size: $font-size-xl;
+  color: $memory-ink;
+}
+
+.emptyDesc {
+  margin: $spacing-sm 0 $spacing-lg;
+  font-size: $font-size-sm;
+  color: $memory-wash;
+}
+
+@keyframes countPop {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

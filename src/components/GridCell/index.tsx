@@ -28,6 +28,18 @@ interface GridCellProps {
    * 否则又变回「一堆小卡片」。
    */
   ghost?: boolean;
+  /**
+   * true = 只留纸格，不渲染数字（挑战版「数字隐去」）。
+   * 默认 false —— 经典版从不传这个参数，行为完全不变。
+   * 注意：格子本身必须还在（底色 + 边框 + 红闪都保留），隐去的只是数字；
+   * 连格子一起藏掉，玩家连「几行几列」都记不住，难度会从「很难」变成「不可能」。
+   */
+  masked?: boolean;
+  /**
+   * true = 宣纸底（挑战版）：格子底色换成冷宣纸、描边压淡、去掉投影。
+   * 默认 false，经典版行为不变。
+   */
+  rice?: boolean;
 }
 
 /**
@@ -48,7 +60,9 @@ const GridCell: React.FC<GridCellProps> = React.memo(
     absolute = false,
     alternate = false,
     colorful = false,
-    ghost = false
+    ghost = false,
+    masked = false,
+    rice = false
   }) => {
     const tone = ((value - 1) % TONE_COUNT) + 1;
     // 双色关必须上色（那是玩法），亲子模式才走 6 色循环，其余一律纸面单色
@@ -68,6 +82,7 @@ const GridCell: React.FC<GridCellProps> = React.memo(
           clipPath !== undefined && styles.clipped,
           isAbsolute && styles.absolute,
           ghost && styles.ghost,
+          rice && styles.rice,
           status === 'done' && styles.done,
           status === 'error' && styles.error
         )}
@@ -76,11 +91,19 @@ const GridCell: React.FC<GridCellProps> = React.memo(
       >
         <Text
           className={classnames(styles.value, isAbsolute && styles.floatingValue)}
-          style={
-            isAbsolute && labelPosition !== undefined
-              ? { left: `${labelPosition.labelX}%`, top: `${labelPosition.labelY}%`, transform: 'translate(-50%, -50%)' }
-              : undefined
-          }
+          style={{
+            ...(isAbsolute && labelPosition !== undefined
+              ? {
+                  left: `${labelPosition.labelX}%`,
+                  top: `${labelPosition.labelY}%`,
+                  transform: 'translate(-50%, -50%)'
+                }
+              : {}),
+            // 隐去用透明度而不是卸载节点：数字是「墨迹褪去」，需要一段过渡才不突兀。
+            // 经典版永远 masked=false，这一行等价于 opacity: 1，行为不变。
+            opacity: masked ? 0 : 1,
+            transition: 'opacity 0.28s ease'
+          }}
         >
           {value}
         </Text>

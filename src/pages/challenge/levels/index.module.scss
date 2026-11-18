@@ -1,0 +1,338 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  position: relative;
+  box-sizing: border-box;
+  @include page-viewport;
+  padding: $spacing-md $page-padding 0;
+  @include page-bottom-space;
+  background-color: $memory-paper;
+  @include paper-grain(rgba(206, 199, 184, 0.5));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+// 这一页**不能**用 page-center-block：它是关卡列表，段内只有 3 关时内容很矮，
+// 整块居中会把「返回 + 关卡标题」推到屏幕四分之一处，像页面塌了。
+// 顶部对齐、底部提示靠 margin-top: auto 钉在页脚，才是列表页该有的样子。
+
+// 右上角一团墨晕：让整页不是一块平铺的色块，而是「纸上有墨」。
+// 装饰层一律用独立元素而不是伪元素：好单独定位、也好统一压在内容下面。
+.wash {
+  position: absolute;
+  top: -180rpx;
+  right: -140rpx;
+  width: 520rpx;
+  height: 520rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(43, 42, 38, 0.09) 0%, rgba(43, 42, 38, 0.03) 45%, rgba(43, 42, 38, 0) 72%);
+  pointer-events: none;
+}
+
+/* ============ 淡墨大字 ============ */
+// 每段只有 3~5 关，列表天然短，下方会空出一大块。
+// 与其硬塞内容，不如落一方淡墨大字 —— 在宣纸上这是「留白」，在屏幕上才不像「页面塌了」。
+// 必须**完整露在纸内**：被右边缘裁掉一半会读成「切坏的字」，而不是水印。
+.ghostGlyph {
+  position: absolute;
+  right: 24rpx;
+  bottom: 110rpx;
+  z-index: 0;
+  font-family: $font-serif;
+  font-size: 400rpx;
+  line-height: 1;
+  color: rgba(43, 42, 38, 0.038);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ============ 页头 ============ */
+.header {
+  position: relative;
+  z-index: 1;
+  margin-top: $spacing-xs;
+  animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  margin-left: -8rpx;
+  padding: 6rpx 10rpx 6rpx 0;
+}
+
+.backIcon {
+  font-size: 40rpx;
+  line-height: 1;
+  color: $memory-wash;
+}
+
+.backText {
+  margin-left: 4rpx;
+  font-family: $font-serif;
+  font-size: $font-size-sm;
+  letter-spacing: 0.12em;
+  color: $memory-wash;
+}
+
+.pageTitle {
+  display: block;
+  margin-top: $spacing-sm;
+  font-family: $font-serif;
+  font-size: 56rpx;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
+  color: $memory-ink;
+}
+
+.pageMeta {
+  font-size: $font-size-sm;
+  color: $memory-ink;
+  font-variant-numeric: tabular-nums;
+}
+
+.pageMetaUnit {
+  font-size: $font-size-xs;
+  color: $memory-wash;
+}
+
+.headerLine {
+  margin-top: $spacing-sm;
+  height: 3rpx;
+  background-color: rgba(206, 199, 184, 0.6);
+  border-radius: 2rpx;
+  overflow: hidden;
+}
+
+.headerLineFill {
+  height: 100%;
+  background-color: $memory-ink;
+  border-radius: 2rpx;
+  transition: width $transition-slow;
+}
+
+/* ============ 段切换 ============ */
+.tabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  margin-top: $spacing-md;
+  border-bottom: 2rpx solid $memory-ink-line;
+}
+
+.tab {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-sm 0;
+  transition: opacity $transition-fast;
+}
+
+.tabLocked {
+  opacity: 0.35;
+}
+
+.tabNumeral {
+  font-size: 18rpx;
+  letter-spacing: 0.16em;
+  color: $memory-wash;
+}
+
+.tabName {
+  margin-top: 4rpx;
+  font-family: $font-serif;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-medium;
+  letter-spacing: 0.08em;
+  color: $memory-wash;
+  transition: color $transition-fast;
+}
+
+.tabActive .tabName {
+  color: $memory-ink;
+  font-weight: $font-weight-bold;
+}
+
+.tabStars {
+  margin-top: 2rpx;
+  font-size: 18rpx;
+  color: $memory-wash;
+  font-variant-numeric: tabular-nums;
+}
+
+// 选中态用一道墨线压在段签底部，像在纸上划了一道
+.tabUnderline {
+  position: absolute;
+  bottom: -2rpx;
+  left: 18%;
+  right: 18%;
+  height: 4rpx;
+  background-color: $memory-ink;
+  border-radius: 2rpx;
+}
+
+/* ============ 段首 ============ */
+.segmentCard {
+  position: relative;
+  z-index: 1;
+  margin-top: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background-color: $memory-paper-raised;
+  border: 2rpx solid $memory-ink-line;
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+}
+
+// 段首左侧一道竖墨线，替代「卡片」的分隔感
+.segmentCard::before {
+  content: '';
+  position: absolute;
+  top: 18rpx;
+  bottom: 18rpx;
+  left: 0;
+  width: 4rpx;
+  background-color: $memory-ink;
+  border-radius: 2rpx;
+}
+
+.segmentText {
+  display: flex;
+  flex-direction: column;
+}
+
+.segmentTitle {
+  font-family: $font-serif;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.1em;
+  color: $memory-ink;
+}
+
+.segmentSub {
+  margin-top: 4rpx;
+  font-size: $font-size-xs;
+  color: $memory-wash;
+}
+
+/* ============ 关卡格 ============ */
+.levelGrid {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: $spacing-md;
+}
+
+.card {
+  position: relative;
+  box-sizing: border-box;
+  width: calc(50% - #{$spacing-xs});
+  margin-bottom: $spacing-sm;
+  padding: $spacing-md;
+  background-color: $memory-paper-raised;
+  border: 2rpx solid $memory-ink-line;
+  border-radius: $radius-sm;
+  transition: transform $transition-fast;
+
+  &:nth-child(odd) {
+    margin-right: $spacing-sm;
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+// 每张卡左上角一枚极淡的墨点：不承载信息，只负责「手写」的呼吸感
+.card::before {
+  content: '';
+  position: absolute;
+  top: 16rpx;
+  right: 16rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background-color: rgba(43, 42, 38, 0.18);
+}
+
+.cardLocked {
+  opacity: 0.42;
+}
+
+// 当前关：墨色描边压重一档，不用底色块（底色一铺就成「按钮」了）
+.cardCurrent {
+  border-color: $memory-ink;
+  box-shadow: 0 0 0 2rpx rgba(43, 42, 38, 0.08);
+}
+
+.cardTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.cardNo {
+  font-family: $font-serif;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $memory-ink;
+}
+
+.cardSize {
+  font-size: $font-size-xs;
+  color: $memory-wash;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardLock {
+  display: block;
+  margin: 8rpx 0;
+  font-family: $font-serif;
+  font-size: $font-size-sm;
+  letter-spacing: 0.1em;
+  // 锁定的卡本身已经 opacity 0.42，文字再浅就彻底读不出来了
+  color: $memory-wash;
+}
+
+.cardMeta {
+  display: block;
+  margin-top: 8rpx;
+  font-size: $font-size-xs;
+  color: $memory-wash;
+  font-variant-numeric: tabular-nums;
+}
+
+.tip {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  padding: $spacing-lg 0 $spacing-sm;
+  text-align: center;
+}
+
+.tipText {
+  font-size: $font-size-xs;
+  color: rgba(111, 107, 99, 0.55);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12rpx);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

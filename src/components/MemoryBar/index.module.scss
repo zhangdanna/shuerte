@@ -1,0 +1,64 @@
+@use '@/styles/variables.scss' as *;
+
+.track {
+  position: relative;
+  width: 686rpx;
+  height: 4rpx;
+  margin: 0 auto;
+  background-color: rgba(206, 199, 184, 0.75);
+  overflow: visible;
+}
+
+// 记忆倒计时：从满到空，时长由内联 animationDuration 决定
+.shrink {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background-color: $memory-ink;
+  animation-name: shrink;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+// 回忆进度：按已点比例填充
+.progress {
+  height: 100%;
+  background-color: $memory-ink;
+  transition: width 0.18s linear;
+}
+
+// 最后 400ms 的预警：整条转朱砂，叠在收缩条上面
+.warn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: $memory-cinnabar;
+  opacity: 0;
+  animation-name: warnIn;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+@keyframes shrink {
+  from {
+    width: 100%;
+  }
+
+  to {
+    width: 0;
+  }
+}
+
+@keyframes warnIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 0.85;
+  }
+}

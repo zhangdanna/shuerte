@@ -3,7 +3,10 @@ import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro';
 import { View, Text, Switch } from '@tarojs/components';
 import classnames from 'classnames';
 import { useSaveStore } from '@/store/useSaveStore';
+import { useChallengeStore } from '@/store/useChallengeStore';
 import { LEVELS, MAX_STARS } from '@/data/levels';
+import { MAX_MEMORY_STARS, MEMORY_LEVELS } from '@/data/challengeLevels';
+import { getTotalMemoryStars } from '@/utils/memoryProgress';
 import { countGoldRecords } from '@/utils/classics';
 import { getMineShare, getMineTimeline } from '@/utils/share';
 import { TimbreKey } from '@/types/game';
@@ -19,10 +22,15 @@ const TOTAL_LEVELS = LEVELS.length;
 
 export default function MinePage() {
   const { stars, totalGames, streakDays, settings, setSetting, resetAll } = useSaveStore();
+  const memoryStars = useChallengeStore((state) => state.stars);
 
   const totalStars = Object.values(stars).reduce((sum, s) => sum + s, 0);
   const clearedLevels = Object.values(stars).filter((s) => s > 0).length;
   const goldRecords = countGoldRecords(stars);
+
+  // 挑战版战绩：独立存档，只读汇总，不影响经典版的任何统计
+  const memoryTotalStars = getTotalMemoryStars(memoryStars);
+  const memoryCleared = MEMORY_LEVELS.filter((level) => (memoryStars[level.id] ?? 0) > 0).length;
 
   useShareAppMessage(() => getMineShare({ totalStars, cleared: clearedLevels }));
   useShareTimeline(() => getMineTimeline({ totalStars, cleared: clearedLevels }));
@@ -84,6 +92,27 @@ export default function MinePage() {
             <Text className={styles.statValue}>{goldRecords}</Text>
             <Text className={styles.statLabel}>金唱片</Text>
           </View>
+        </View>
+      </View>
+
+      {/* 挑战版：两个玩法并列，这里给一个能一眼看到进度的入口 */}
+      <View className={styles.section}>
+        <Text className={styles.sectionTitle}>挑战版 · 墨隐</Text>
+        <View
+          className={styles.challengeCard}
+          onClick={() => Taro.switchTab({ url: '/pages/challenge/home/index' })}
+        >
+          <View className={styles.challengeMeta}>
+            <Text className={styles.challengeTitle}>
+              {memoryCleared}
+              <Text className={styles.challengeUnit}>/{MEMORY_LEVELS.length} 关</Text>
+              {' · '}
+              {memoryTotalStars}
+              <Text className={styles.challengeUnit}>/{MAX_MEMORY_STARS} 星</Text>
+            </Text>
+            <Text className={styles.challengeDesc}>数字隐去后，靠记忆按顺序点回去</Text>
+          </View>
+          <Text className={styles.aboutArrow}>›</Text>
         </View>
       </View>
 

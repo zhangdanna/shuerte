@@ -4,9 +4,14 @@ export default defineAppConfig({
     'pages/levels/index',
     'pages/collection/index',
     'pages/mine/index',
+    // 挑战版「墨隐」：独立页面栈，与经典版共用纸面视觉，但不共用存档与音效
+    'pages/challenge/home/index',
     'pages/game/index',
     'pages/result/index',
-    'pages/rank/index'
+    'pages/rank/index',
+    'pages/challenge/levels/index',
+    'pages/challenge/game/index',
+    'pages/challenge/result/index'
   ],
   tabBar: {
     color: '#8c8478',
@@ -31,6 +36,12 @@ export default defineAppConfig({
         text: '曲集',
         iconPath: 'assets/tabbar/collection.png',
         selectedIconPath: 'assets/tabbar/collection-selected.png'
+      },
+      {
+        pagePath: 'pages/challenge/home/index',
+        text: '挑战',
+        iconPath: 'assets/tabbar/challenge.png',
+        selectedIconPath: 'assets/tabbar/challenge-selected.png'
       },
       {
         pagePath: 'pages/mine/index',

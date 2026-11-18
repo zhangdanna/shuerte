@@ -1,0 +1,86 @@
+@use '@/styles/variables.scss' as *;
+
+// 盘面宽度由父容器决定（对局页外面裱一层宣纸，结算页直接铺满内容区）
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+// 格子宽度 = 100% / cols，padding-bottom 同比例 → 正方形格。
+// 字号挂在容器上，由 GridCell 的 .value 继承（em 体系不变）。
+// 对局页盘面外面还裱了一层宣纸（内缩 14rpx），所以字号按「实际格宽」再收一点。
+.cols2 {
+  font-size: 122rpx;
+}
+
+.cols3 {
+  font-size: 82rpx;
+}
+
+.cols4 {
+  font-size: 57rpx;
+}
+
+.slot {
+  position: relative;
+  box-sizing: border-box;
+}
+
+// 内缩 5rpx 形成 10rpx 缝隙：格子之间必须能看出分隔，
+// 否则数字隐去后整块盘面糊成一片白，玩家连「几行几列」都数不清
+.inner {
+  position: absolute;
+  top: 5rpx;
+  left: 5rpx;
+  right: 5rpx;
+  bottom: 5rpx;
+}
+
+// 冻结态（记忆/暂停/结算）：整块盘面不响应触摸。
+// 记忆阶段如果还能按下去、格子还会缩一下，玩家会以为自己点早了，
+// 其实是被引擎静默忽略 —— 这种「点了没反应」比直接不能点更让人困惑。
+.frozen {
+  pointer-events: none;
+}
+
+/* ============ 圆形盘面 ============ */
+// 几何完全由 utils/circleLayout 算（半径分圈、角度分格、带缝隙的圆角扇环），
+// 和经典版的圆形卡是同一套，所以两版的圆长得一模一样。
+//
+// 宽度由父容器决定，高度用 padding-bottom: 100% 撑成正方形 ——
+// 直接写 height: 100% 在「宽度未知、高度由宽度决定」的场景里会塌成 0。
+// 扇环必须落在一个**有真实高度**的盒子里（绝对定位的 100% 才有依据），
+// 所以真正的圆盘是里面那层 .circleArea。
+.circleBoard {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  padding-bottom: 100%;
+  // 盘面比扇环深一档：缝隙露出盘面，数字隐去后玩家才数得清「几圈、每圈几格」。
+  // 这一条是圆形关卡能成立的前提 —— 缝隙看不见，圆盘就是一块白饼。
+  background-color: $memory-ink-soft;
+  border-radius: $radius-round;
+  // 用内阴影而不是 border：border 会和 padding-bottom: 100% 的方框算法打架，
+  // 撑出来的「正方形」会差几个 rpx，圆就不圆了。
+  box-shadow: inset 0 0 0 2rpx $memory-ink-line;
+}
+
+// 向内缩 5%：最外圈不贴到圆边上，留一圈盘面当「边」
+.circleArea {
+  position: absolute;
+  top: 5%;
+  left: 5%;
+  right: 5%;
+  bottom: 5%;
+}
+
+// 字号挂在盘面上，由 GridCell 的 .value 继承（em 体系不变）。
+// 圆形的格子沿半径方向的厚度有限，字号比同格数的方阵小一档。
+.circle3 {
+  font-size: 44rpx;
+}
+
+.circle4 {
+  font-size: 38rpx;
+}

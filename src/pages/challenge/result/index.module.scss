@@ -1,0 +1,240 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  position: relative;
+  box-sizing: border-box;
+  @include page-viewport;
+  padding: $spacing-lg $page-padding 0;
+  @include page-bottom-space;
+  background-color: $memory-paper;
+  @include paper-grain(rgba(206, 199, 184, 0.5));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  @include page-center-block;
+  overflow: hidden;
+}
+
+// 结算页是「一幅画的题跋」：墨晕从上方垂下来，把视线收到中间。
+// 用独立元素而不是 ::before —— page-center-block 已经占了 ::before/::after 做 flex 占位。
+.wash {
+  position: absolute;
+  top: -240rpx;
+  left: 50%;
+  width: 760rpx;
+  height: 760rpx;
+  margin-left: -380rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(43, 42, 38, 0.08) 0%, rgba(43, 42, 38, 0) 70%);
+  pointer-events: none;
+}
+
+/* ============ 页头 ============ */
+.head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.seal {
+  @include seal-chip($memory-cinnabar);
+
+  width: 64rpx;
+  height: 64rpx;
+  font-size: 36rpx;
+  line-height: 1;
+}
+
+.title {
+  margin-top: $spacing-sm;
+  font-family: $font-serif;
+  font-size: 56rpx;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.18em;
+  color: $memory-ink;
+}
+
+.subtitle {
+  margin-top: 6rpx;
+  font-size: $font-size-xs;
+  letter-spacing: 0.06em;
+  color: $memory-wash;
+}
+
+/* ============ 星级 ============ */
+.stars {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: $spacing-lg;
+}
+
+.starHint {
+  margin-top: $spacing-xs;
+  font-size: $font-size-sm;
+  color: $memory-wash;
+}
+
+/* ============ 数据 ============ */
+// 上下两道墨线，不用卡片底：像册页里的一条批注栏
+.dataRow {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-top: $spacing-lg;
+  padding: $spacing-md 0;
+  border-top: 2rpx solid $memory-ink-line;
+  border-bottom: 2rpx solid $memory-ink-line;
+}
+
+.dataItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dataValue {
+  font-family: $font-serif;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $memory-ink;
+  font-variant-numeric: tabular-nums;
+}
+
+.dataLabel {
+  margin-top: 4rpx;
+  font-size: $font-size-xs;
+  letter-spacing: 0.1em;
+  color: $memory-wash;
+}
+
+.dataDivider {
+  width: 2rpx;
+  height: 44rpx;
+  background-color: rgba(206, 199, 184, 0.8);
+}
+
+.bestLine {
+  position: relative;
+  z-index: 1;
+  margin-top: $spacing-sm;
+  font-size: $font-size-xs;
+  color: $memory-wash;
+}
+
+/* ============ 答案复盘 ============ */
+.answer {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-top: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.answerHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: $spacing-sm;
+}
+
+.answerTitle {
+  font-family: $font-serif;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.1em;
+  color: $memory-ink;
+}
+
+.answerHint {
+  font-size: $font-size-xs;
+  color: $memory-wash;
+}
+
+// 与对局页同一种「册页」裱法：玩家在结算页看到的盘面，和对局时是同一张纸
+.sheet {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14rpx;
+  background-color: $memory-paper-raised;
+  border: 2rpx solid $memory-ink-line;
+  border-radius: $radius-sm;
+  box-shadow: inset 0 0 0 6rpx rgba(243, 240, 232, 0.9);
+}
+
+/* ============ 操作 ============ */
+.actions {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-top: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.primaryBtn {
+  width: 100%;
+  height: $button-height-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $memory-ink;
+  border-radius: $radius-sm;
+  transition: transform $transition-fast, background-color $transition-fast;
+
+  &:active {
+    transform: scale(0.985);
+    background-color: $memory-ink-deep;
+  }
+}
+
+.primaryBtnText {
+  font-family: $font-serif;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.22em;
+  color: $memory-paper-raised;
+}
+
+.ghostBtn {
+  width: 100%;
+  height: $button-height-md;
+  margin-top: $spacing-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid $memory-ink-line;
+  border-radius: $radius-sm;
+  background-color: transparent;
+}
+
+.ghostBtnText {
+  font-family: $font-serif;
+  font-size: $font-size-md;
+  letter-spacing: 0.16em;
+  color: $memory-wash;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12rpx);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

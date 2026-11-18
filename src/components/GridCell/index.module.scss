@@ -73,6 +73,23 @@ $digits: $cell-digit-1, $cell-digit-2, $cell-digit-3, $cell-digit-4, $cell-digit
   box-shadow: none;
 }
 
+// 挑战版「墨隐」：冷宣纸底、淡墨描边、去掉投影。
+// 格子要像「在纸上划出来的格」，不是「浮在纸上的白卡片」——
+// 一有投影就变成 UI 组件，水墨的味道立刻没了。
+.cell.rice {
+  background-color: #f7f4ec;
+  border-color: #d9d2c4;
+  border-radius: 6rpx;
+  box-shadow: none;
+}
+
+// 数字用浓墨：经典版的 #5b544b 是暖灰（配它的米白纸正好），
+// 落在更冷的宣纸底上会显得像铅笔稿；水墨要的是「落笔即黑」，所以挑战版单独压深一档。
+// 只挂在 .rice 作用域内，经典版调用点不受影响；点错的红色仍在后面覆盖（同优先级、后者在后）。
+.cell.rice .value {
+  color: $memory-ink;
+}
+
 // 铺满整张卡片的格子（圆形卡）：几何坐标相对整张卡片计算
 .absolute {
   position: absolute;

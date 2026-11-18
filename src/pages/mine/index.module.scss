@@ -223,6 +223,45 @@
   color: $ink-200;
 }
 
+/* ============ 挑战版入口 ============ */
+.challengeCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx;
+  background-color: $memory-paper-raised;
+  border: 2rpx solid $memory-ink-line;
+  border-radius: $radius-lg;
+
+  &:active {
+    background-color: $memory-ink-soft;
+  }
+}
+
+.challengeMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.challengeTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $memory-ink;
+  font-variant-numeric: tabular-nums;
+}
+
+.challengeUnit {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-normal;
+  color: $ink-400;
+}
+
+.challengeDesc {
+  margin-top: 6rpx;
+  font-size: $font-size-xs;
+  color: $ink-400;
+}
+
 .version {
   display: block;
   text-align: center;
