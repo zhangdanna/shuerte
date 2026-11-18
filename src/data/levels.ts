@@ -19,14 +19,18 @@ const SIZE_THRESHOLDS: Record<number, Omit<LevelThresholds, 'platinum'>> = {
 /**
  * 每关限时（毫秒）= 达标线（silver）× 1.15，3×3 例外给到 ×1.5（新手第一关，别一上来就失败）。
  * 旧表是「达标线 × 1.5~2」，等于怎么点都能过 —— 限时形同虚设，故收紧到「超过达标线 15% 就失败」。
+ *
+ * 7×7 / 8×8 在 1.15 的基础上再单独放宽（94s→120s、132s→170s）：
+ * 视觉搜索成本是超线性的，49 / 64 格的难度远不止 25 格的 2 倍，手机小屏 + 手指遮挡还要再打折。
+ * 放宽只影响「能不能过」，星级阈值（gold / silver / platinum）不动，所以拿星难度不变。
  */
 const SIZE_TIME_LIMITS: Record<number, number> = {
   3: 12000,
   4: 17000,
   5: 37000,
   6: 63000,
-  7: 94000,
-  8: 132000
+  7: 120000,
+  8: 170000
 };
 
 /** 尺寸阶梯：3×3 起步，逐关 +1 到 8×8 */
@@ -66,7 +70,19 @@ const PLATINUM_RATIO = 0.85;
 const LEVELS_PER_TIER = SIZE_STEPS.length * CYCLES_PER_TIER;
 
 /** 难度系数：每推进一个尺寸循环收紧 3%，最低压到 70% */
+/**
+ * 星级阈值系数：轮次越靠后越紧（玩家越熟练，拿星越难），下限 0.7。
+ * **只作用于星级阈值，不再作用于限时** —— 以前两者共用一个系数，导致轮次靠后时
+ * 「难度在涨、限时在缩」，长调卷的 7×7 一度只剩 79.9s（1.63s/格），比 5×5 还紧。
+ */
 const cycleFactor = (globalCycle: number): number => Math.max(0.7, 1 - 0.03 * (globalCycle - 1));
+
+/**
+ * 限时系数：轮次越靠后越松，上限 1.1。
+ * 与 cycleFactor 方向相反是刻意的 —— 限时管「能不能过」，星级管「好不好」，
+ * 后 6 关是变体玩法（倒序 / 双色）＋ 图案卡，认知负荷更高，理应多给时间。
+ */
+const timeLimitFactor = (globalCycle: number): number => Math.min(1.1, 1 + 0.02 * (globalCycle - 1));
 
 const buildChapter = (tierIndex: number): ChapterConfig => {
   const blueprint = TIER_BLUEPRINTS[tierIndex];
@@ -119,7 +135,7 @@ const buildLevels = (chapter: ChapterConfig, tierIndex: number): LevelConfig[] =
         platinum:
           blueprint.maxStars >= 5 ? Math.round(thresholds.gold * factor * PLATINUM_RATIO) : null
       },
-      timeLimit: Math.round(timeLimit * factor)
+      timeLimit: Math.round(timeLimit * timeLimitFactor(globalCycle))
     };
   });
 };

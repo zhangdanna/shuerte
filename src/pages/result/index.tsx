@@ -127,6 +127,10 @@ const ResultPage: React.FC = () => {
   const totalStars = Object.values(starsMap).reduce((sum, value) => sum + value, 0);
   const nextLevel = getNextLevel(level.id);
   const bestTime = bestTimes[level.id];
+  // 下一关此刻是否真的进得去：存在、本关已通过、且已解锁。
+  // 主色按钮永远给「能立刻执行的那一步」，所以这里是按钮配色的唯一判据。
+  const canAdvance =
+    !failed && nextLevel !== undefined && isLevelUnlocked(nextLevel, starsMap, totalStars);
 
   const handleRetry = () => {
     Taro.redirectTo({ url: `/pages/game/index?levelId=${level.id}` });
@@ -261,11 +265,20 @@ const ResultPage: React.FC = () => {
       )}
 
       <View className={styles.actions}>
-        <View className={styles.primaryBtn} onClick={handleRetry}>
-          <Text className={styles.primaryBtnText}>{failed ? '再来一次' : '再来一局'}</Text>
+        {/* 主色给「下一步」：能进下一关时它才是那个带颜色的按钮。
+            玩家习惯性点带颜色的按钮，之前这里放的是「再来一局」，手比眼快就点回同一关。 */}
+        {canAdvance && (
+          <View className={styles.primaryBtn} onClick={handleNext}>
+            <Text className={styles.primaryBtnText}>挑战下一关</Text>
+          </View>
+        )}
+        <View className={canAdvance ? styles.ghostBtn : styles.primaryBtn} onClick={handleRetry}>
+          <Text className={canAdvance ? styles.ghostBtnText : styles.primaryBtnText}>
+            {failed ? '再来一次' : '再来一局'}
+          </Text>
         </View>
-        {/* 只有本关通过才提供下一关，失败时不能跳过 */}
-        {!failed && nextLevel && (
+        {/* 下一关暂时进不去（全部通关 / 星星不够）时仍留入口，点了会说明差多少星，但不做主色 */}
+        {!failed && nextLevel && !canAdvance && (
           <View className={styles.ghostBtn} onClick={handleNext}>
             <Text className={styles.ghostBtnText}>挑战下一关</Text>
           </View>
